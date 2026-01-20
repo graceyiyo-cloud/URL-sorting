@@ -3,31 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的網址管理器</title>
+    <title>我的網址管理器 (Retro Ver.)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
     <style>
+        /* 復古風格設定 */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f3f4f6;
+            font-family: 'Courier New', Courier, monospace; /* 打字機字體 */
+            background-color: #f0e6d2; /* 復古米黃色背景 */
+            background-image: radial-gradient(#d4c5a5 1px, transparent 1px);
+            background-size: 20px 20px;
         }
+
+        /* 復古硬陰影效果 */
+        .retro-shadow {
+            box-shadow: 4px 4px 0px 0px #1f2937; /* 深灰/黑色硬陰影 */
+        }
+        .retro-shadow:active {
+            box-shadow: 2px 2px 0px 0px #1f2937;
+            transform: translate(2px, 2px);
+        }
+
+        /* 輸入框聚焦樣式 */
+        .retro-input:focus {
+            outline: none;
+            background-color: #fff;
+            box-shadow: 4px 4px 0px 0px #ea580c; /* 聚焦時變成橘色陰影 */
+        }
+
         .drag-handle {
             cursor: move;
             color: #9ca3af;
         }
         .drag-handle:hover {
-            color: #4b5563;
+            color: #ea580c; /* 橘色 */
         }
-        /* 拖曳時的樣式 */
-        .sortable-ghost {
-            opacity: 0.4;
-            background-color: #e5e7eb;
-        }
+        
         .loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3b82f6;
+            border: 4px solid #f0e6d2;
+            border-top: 4px solid #1f2937;
             border-radius: 50%;
             width: 30px;
             height: 30px;
@@ -40,63 +56,80 @@
         }
     </style>
 </head>
-<body class="pb-10">
+<body class="pb-10 min-h-screen">
 
-    <div class="max-w-3xl mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">
-            <i class="fa-solid fa-link text-blue-600 mr-2"></i>網址雲端管理
-        </h1>
+    <div class="max-w-lg mx-auto px-4 py-8">
+        
+        <div class="text-center mb-8 border-b-4 border-gray-800 pb-4">
+            <h1 class="text-2xl font-bold text-gray-800 tracking-wider uppercase">
+                <i class="fa-solid fa-floppy-disk mr-2"></i>URL_MANAGER
+            </h1>
+            <p class="text-sm text-gray-600 mt-2">v.1998 // CLOUD_SYNC_ON</p>
+        </div>
 
-        <div class="bg-white p-6 rounded-xl shadow-md mb-8">
-            <h2 class="text-lg font-semibold text-gray-700 mb-4">新增連結</h2>
+        <div class="bg-[#fffef0] p-6 border-2 border-gray-800 retro-shadow mb-8">
+            <h2 class="text-sm font-bold text-gray-800 mb-4 uppercase border-b-2 border-gray-200 pb-1">
+                > Create New Entry
+            </h2>
             <div class="flex flex-col gap-3">
-                <input type="text" id="newDesc" placeholder="輸入網址說明 (例如: 公司官網)" 
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="url" id="newUrl" placeholder="輸入網址 (例如: https://...)" 
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="text" id="newDesc" placeholder="輸入說明 (按 Enter 新增)" 
+                    class="retro-input w-full px-4 py-2 border-2 border-gray-800 bg-gray-50 text-gray-800 placeholder-gray-400">
+                
+                <input type="url" id="newUrl" placeholder="輸入網址 (按 Enter 新增)" 
+                    class="retro-input w-full px-4 py-2 border-2 border-gray-800 bg-gray-50 text-gray-800 placeholder-gray-400">
+                
                 <button onclick="addItem()" 
-                    class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200 font-medium">
-                    <i class="fa-solid fa-plus mr-1"></i> 加入清單
+                    class="w-full bg-orange-600 text-white py-2 border-2 border-gray-800 retro-shadow hover:bg-orange-500 transition-none font-bold tracking-widest mt-2">
+                    [ SAVE ]
                 </button>
             </div>
         </div>
 
         <div id="loading" class="loading-spinner"></div>
-        <div id="list-container" class="bg-white rounded-xl shadow-md overflow-hidden hidden">
-            <ul id="link-list" class="divide-y divide-gray-100">
+        <div id="list-container" class="hidden">
+            <ul id="link-list" class="space-y-4">
                 </ul>
         </div>
         
-        <p id="empty-msg" class="text-center text-gray-500 mt-8 hidden">目前還沒有任何資料，請新增一筆！</p>
+        <p id="empty-msg" class="text-center text-gray-600 mt-8 hidden font-bold">
+            [ SYSTEM: NO DATA FOUND ]
+        </p>
     </div>
 
-    <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 px-4">
-        <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl transform transition-all scale-100">
-            <h3 class="text-xl font-bold text-gray-800 mb-4">編輯項目</h3>
+    <div id="editModal" class="fixed inset-0 bg-gray-800 bg-opacity-80 hidden flex items-center justify-center z-50 px-4">
+        <div class="bg-[#fffef0] border-4 border-gray-800 p-6 w-full max-w-sm retro-shadow relative">
+            <button onclick="closeEditModal()" class="absolute top-2 right-2 text-gray-800 hover:text-red-600 font-bold text-xl px-2">
+                X
+            </button>
+
+            <h3 class="text-lg font-bold text-gray-800 mb-6 uppercase border-b-2 border-gray-800 pb-2">
+                > Edit Mode
+            </h3>
             <input type="hidden" id="editKey">
+            
             <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2">說明</label>
-                <input type="text" id="editDesc" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-gray-800 text-xs font-bold mb-1">DESCRIPTION:</label>
+                <input type="text" id="editDesc" class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-white">
             </div>
             <div class="mb-6">
-                <label class="block text-gray-700 text-sm font-bold mb-2">網址</label>
-                <input type="text" id="editUrl" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-gray-800 text-xs font-bold mb-1">URL:</label>
+                <input type="text" id="editUrl" class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-white">
             </div>
+            
             <div class="flex justify-end gap-3">
-                <button onclick="closeEditModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">取消</button>
-                <button onclick="saveEdit()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">儲存</button>
+                <button onclick="saveEdit()" class="px-6 py-2 bg-gray-800 text-white border-2 border-gray-800 hover:bg-gray-700 font-bold">
+                    OK
+                </button>
             </div>
         </div>
     </div>
 
     <script type="module">
-        // 為了在瀏覽器直接運行，我們使用 CDN 版本的網址
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
         import { getDatabase, ref, onValue, push, set, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         // ==========================================
-        // 您的 Firebase 組態 (已更新)
+        // 您的 Firebase 組態 (維持不變)
         // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyDlxwcj-PSv2Bc1UFgjlVnKUmIzvwXmBig",
@@ -106,19 +139,28 @@
             messagingSenderId: "576779796443",
             appId: "1:576779796443:web:6f3026b1cc926619e0f1fe",
             measurementId: "G-N5JXJZ5PW5",
-            // 注意：如果您打開網頁無法載入，請確認 Firebase Console 中 Realtime Database 的網址是否為下方這個
             databaseURL: "https://url-sorting-default-rtdb.firebaseio.com"
         };
 
-        // 初始化 Firebase
         const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app); // 您提供的代碼中有 Analytics，這裡一併加入
         const db = getDatabase(app);
-        const dbRef = ref(db, 'links'); // 資料儲存在 'links' 節點
+        const dbRef = ref(db, 'links');
 
-        let currentLinks = []; // 本地暫存資料，用於排序
+        let currentLinks = [];
 
-        // 監聽資料變更 (讀取資料)
+        // 監聽 Enter 鍵功能
+        function setupEnterKey() {
+            const inputs = [document.getElementById('newDesc'), document.getElementById('newUrl')];
+            inputs.forEach(input => {
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        window.addItem();
+                    }
+                });
+            });
+        }
+        setupEnterKey();
+
         onValue(dbRef, (snapshot) => {
             const data = snapshot.val();
             const listEl = document.getElementById('link-list');
@@ -131,12 +173,10 @@
             currentLinks = [];
 
             if (data) {
-                // 將資料轉換為陣列並排序
                 Object.keys(data).forEach(key => {
                     currentLinks.push({ id: key, ...data[key] });
                 });
                 
-                // 依照 order 欄位排序 (如果沒有 order 則預設為 0)
                 currentLinks.sort((a, b) => (a.order || 0) - (b.order || 0));
 
                 if (currentLinks.length > 0) {
@@ -145,33 +185,36 @@
                     
                     currentLinks.forEach((item) => {
                         const li = document.createElement('li');
-                        li.className = 'p-4 hover:bg-gray-50 flex items-center gap-3 group transition-colors duration-200';
-                        li.dataset.id = item.id; // 綁定 ID 以便排序
+                        // 復古卡片樣式
+                        li.className = 'bg-white p-3 border-2 border-gray-800 retro-shadow flex items-center gap-3 group';
+                        li.dataset.id = item.id;
                         
                         li.innerHTML = `
-                            <div class="drag-handle p-2 cursor-grab active:cursor-grabbing">
+                            <div class="drag-handle p-2 cursor-grab active:cursor-grabbing border-r-2 border-gray-200 pr-3">
                                 <i class="fa-solid fa-grip-vertical"></i>
                             </div>
                             
                             <div class="flex-grow min-w-0">
-                                <div class="font-bold text-gray-800 truncate">${escapeHtml(item.desc)}</div>
-                                <div class="text-sm text-gray-500 truncate">
-                                    <a href="${item.url}" target="_blank" class="hover:text-blue-600 hover:underline">${escapeHtml(item.url)}</a>
+                                <div class="font-bold text-gray-900 truncate tracking-tight text-sm">${escapeHtml(item.desc)}</div>
+                                <div class="text-xs text-gray-500 truncate mt-1 font-mono">
+                                    <a href="${item.url}" target="_blank" class="hover:text-orange-600 hover:underline decoration-2 underline-offset-2">> ${escapeHtml(item.url)}</a>
                                 </div>
                             </div>
 
-                            <div class="flex items-center gap-2">
-                                <button onclick="copyToClipboard('${escapeHtml(item.desc)}', '${escapeHtml(item.url)}')" 
-                                    class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-full transition" title="複製">
+                            <div class="flex items-center gap-1">
+                                <button onclick="copyToClipboard(this, '${escapeHtml(item.desc)}', '${escapeHtml(item.url)}')" 
+                                    class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-gray-200 border-2 border-transparent hover:border-gray-800 transition-none rounded-none" title="COPY">
                                     <i class="fa-regular fa-copy"></i>
                                 </button>
+                                
                                 <button onclick="openEditModal('${item.id}', '${escapeHtml(item.desc)}', '${escapeHtml(item.url)}')" 
-                                    class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition" title="編輯">
+                                    class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-gray-200 border-2 border-transparent hover:border-gray-800 transition-none rounded-none" title="EDIT">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
+                                
                                 <button onclick="deleteItem('${item.id}')" 
-                                    class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition" title="刪除">
-                                    <i class="fa-solid fa-trash"></i>
+                                    class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-red-100 hover:text-red-600 border-2 border-transparent hover:border-gray-800 transition-none rounded-none" title="DELETE">
+                                    <i class="fa-solid fa-xmark"></i>
                                 </button>
                             </div>
                         `;
@@ -187,7 +230,6 @@
             }
         });
 
-        // 暴露函式給全域 (因為 type="module" 預設是封閉範疇)
         window.addItem = function() {
             const descInput = document.getElementById('newDesc');
             const urlInput = document.getElementById('newUrl');
@@ -195,7 +237,9 @@
             let url = urlInput.value.trim();
 
             if (!desc || !url) {
-                alert("請輸入說明與網址！");
+                // 如果是空的，做個簡單的搖晃動畫提示
+                descInput.classList.add('ring-2', 'ring-red-500');
+                setTimeout(() => descInput.classList.remove('ring-2', 'ring-red-500'), 500);
                 return;
             }
 
@@ -214,24 +258,39 @@
             }).then(() => {
                 descInput.value = '';
                 urlInput.value = '';
+                // 聚焦回第一個輸入框，方便連續輸入
+                descInput.focus();
             }).catch(error => {
                 console.error(error);
-                alert("新增失敗，請檢查：\n1. Firebase Database 規則是否設為 true\n2. 網頁主控台 (Console) 是否有紅色錯誤訊息");
+                alert("ERROR: WRITE_FAILED");
             });
         };
 
         window.deleteItem = function(key) {
-            if (confirm('確定要刪除這個連結嗎？')) {
+            if (confirm('DELETE ENTRY? Y/N')) {
                 remove(ref(db, 'links/' + key));
             }
         };
 
-        window.copyToClipboard = function(desc, url) {
+        // 修改後的複製功能：不跳 Alert，只變更按鈕外觀
+        window.copyToClipboard = function(btnElement, desc, url) {
             const textToCopy = `${desc} - ${url}`;
             navigator.clipboard.writeText(textToCopy).then(() => {
-                alert("已複製：\n" + textToCopy);
+                // 1. 保存原始圖示
+                const originalIcon = btnElement.innerHTML;
+                
+                // 2. 變更為打勾圖示與顏色
+                btnElement.innerHTML = '<i class="fa-solid fa-check"></i>';
+                btnElement.classList.add('text-green-600', 'bg-green-100', 'border-green-600');
+                
+                // 3. 1秒後恢復原狀
+                setTimeout(() => {
+                    btnElement.innerHTML = originalIcon;
+                    btnElement.classList.remove('text-green-600', 'bg-green-100', 'border-green-600');
+                }, 1000);
+                
             }).catch(err => {
-                console.error('複製失敗', err);
+                console.error('Copy failed', err);
             });
         };
 
@@ -264,7 +323,7 @@
         const el = document.getElementById('link-list');
         Sortable.create(el, {
             handle: '.drag-handle',
-            animation: 150,
+            animation: 0, // 復古風不需要滑順動畫
             ghostClass: 'sortable-ghost',
             onEnd: function (evt) {
                 const items = el.querySelectorAll('li');
