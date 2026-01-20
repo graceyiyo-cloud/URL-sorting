@@ -233,7 +233,6 @@
                 
                 filteredLinks.forEach((item) => {
                     const li = document.createElement('li');
-                    // 修改處：使用 items-stretch 確保高度一致，讓左右邊框對齊
                     li.className = `bg-white p-3 border-2 border-gray-800 retro-shadow flex items-stretch gap-3 group rounded-xl ${isSearching ? 'drag-disabled' : ''}`;
                     li.dataset.id = item.id;
                     
@@ -249,19 +248,19 @@
                             </div>
                         </div>
 
-                        <div class="flex flex-col gap-2 pl-3 border-l-2 border-gray-200 justify-center">
+                        <div class="flex flex-col gap-1 pl-2 border-l-2 border-gray-200 justify-center">
                             <button onclick="copyToClipboard(this, '${escapeHtml(item.desc)}', '${escapeHtml(item.url)}')" 
-                                class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-gray-200 border-2 border-transparent hover:border-gray-800 transition-none rounded-lg" title="COPY">
+                                class="w-7 h-7 flex items-center justify-center text-xs text-gray-800 hover:bg-gray-200 border-2 border-transparent hover:border-gray-800 transition-none rounded-lg" title="COPY">
                                 <i class="fa-regular fa-copy"></i>
                             </button>
                             
                             <button onclick="openEditModal('${item.id}', '${escapeHtml(item.desc)}', '${escapeHtml(item.url)}')" 
-                                class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-gray-200 border-2 border-transparent hover:border-gray-800 transition-none rounded-lg" title="EDIT">
+                                class="w-7 h-7 flex items-center justify-center text-xs text-gray-800 hover:bg-gray-200 border-2 border-transparent hover:border-gray-800 transition-none rounded-lg" title="EDIT">
                                 <i class="fa-solid fa-pen"></i>
                             </button>
                             
                             <button onclick="deleteItem('${item.id}')" 
-                                class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-red-100 hover:text-red-600 border-2 border-transparent hover:border-gray-800 transition-none rounded-lg" title="DELETE">
+                                class="w-7 h-7 flex items-center justify-center text-xs text-gray-800 hover:bg-red-100 hover:text-red-600 border-2 border-transparent hover:border-gray-800 transition-none rounded-lg" title="DELETE">
                                 <i class="fa-solid fa-xmark"></i>
                             </button>
                         </div>
