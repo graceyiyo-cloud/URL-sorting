@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的網址管理器 (Retro Ver.)</title>
+    <title>我的網址管理器 (Retro Rounded)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome -->
@@ -43,7 +43,7 @@
             color: #ea580c;
         }
         
-        /* 搜尋時停用拖曳的樣式 */
+        /* 搜尋時禁用拖曳的樣式 */
         .drag-disabled .drag-handle {
             cursor: not-allowed;
             color: #e5e7eb;
@@ -68,38 +68,41 @@
 
     <div class="max-w-lg mx-auto px-4 py-4">
         
-        <!-- 標題 (縮減間距) -->
+        <!-- 標題 -->
         <div class="text-center mb-4 border-b-4 border-gray-800 pb-2">
             <h1 class="text-2xl font-bold text-gray-800 tracking-wider uppercase">
                 <i class="fa-solid fa-floppy-disk mr-2"></i>URL_MANAGER
             </h1>
         </div>
 
-        <!-- 新增區塊 -->
-        <div class="bg-[#fffef0] p-4 border-2 border-gray-800 retro-shadow mb-4">
+        <!-- 新增區塊 (加入 rounded-2xl) -->
+        <div class="bg-[#fffef0] p-4 border-2 border-gray-800 retro-shadow mb-4 rounded-2xl">
             <h2 class="text-sm font-bold text-gray-800 mb-2 uppercase border-b-2 border-gray-200 pb-1">
                 > Create New Entry
             </h2>
             <div class="flex flex-col gap-2">
+                <!-- 輸入框加入 rounded-xl -->
                 <input type="text" id="newDesc" placeholder="輸入說明 (按 Enter 新增)" 
-                    class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-gray-50 text-gray-800 placeholder-gray-400 text-sm">
+                    class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-gray-50 text-gray-800 placeholder-gray-400 text-sm rounded-xl">
                 
                 <input type="url" id="newUrl" placeholder="輸入網址 (按 Enter 新增)" 
-                    class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-gray-50 text-gray-800 placeholder-gray-400 text-sm">
+                    class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-gray-50 text-gray-800 placeholder-gray-400 text-sm rounded-xl">
                 
+                <!-- 按鈕加入 rounded-xl -->
                 <button onclick="addItem()" 
-                    class="w-full bg-orange-600 text-white py-2 border-2 border-gray-800 retro-shadow hover:bg-orange-500 transition-none font-bold tracking-widest mt-1 text-sm">
+                    class="w-full bg-orange-600 text-white py-2 border-2 border-gray-800 retro-shadow hover:bg-orange-500 transition-none font-bold tracking-widest mt-1 text-sm rounded-xl">
                     [ SAVE ]
                 </button>
             </div>
         </div>
 
-        <!-- 搜尋區塊 (新增) -->
+        <!-- 搜尋區塊 -->
         <div class="mb-6">
             <div class="relative">
-                <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400"></i>
-                <input type="text" id="searchInput" placeholder="SEARCH_DATA..." 
-                    class="retro-input w-full pl-10 pr-4 py-2 border-2 border-gray-800 bg-white text-gray-800 placeholder-gray-400 text-sm">
+                <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400 z-10"></i>
+                <!-- 修正：移除 inline onclick，改用 JS 監聽 -->
+                <input type="text" id="searchInput" placeholder="SEARCH_DATA... (點擊清除)" 
+                    class="retro-input w-full pl-10 pr-4 py-2 border-2 border-gray-800 bg-white text-gray-800 placeholder-gray-400 text-sm rounded-xl relative z-0">
             </div>
         </div>
 
@@ -116,10 +119,10 @@
         </p>
     </div>
 
-    <!-- 編輯 Modal (復古風) -->
+    <!-- 編輯 Modal (加入 rounded-2xl) -->
     <div id="editModal" class="fixed inset-0 bg-gray-800 bg-opacity-80 hidden flex items-center justify-center z-50 px-4">
-        <div class="bg-[#fffef0] border-4 border-gray-800 p-6 w-full max-w-sm retro-shadow relative">
-            <button onclick="closeEditModal()" class="absolute top-2 right-2 text-gray-800 hover:text-red-600 font-bold text-xl px-2">
+        <div class="bg-[#fffef0] border-4 border-gray-800 p-6 w-full max-w-sm retro-shadow relative rounded-2xl">
+            <button onclick="closeEditModal()" class="absolute top-2 right-3 text-gray-800 hover:text-red-600 font-bold text-xl px-2">
                 X
             </button>
 
@@ -130,15 +133,15 @@
             
             <div class="mb-4">
                 <label class="block text-gray-800 text-xs font-bold mb-1">DESCRIPTION:</label>
-                <input type="text" id="editDesc" class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-white">
+                <input type="text" id="editDesc" class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-white rounded-xl">
             </div>
             <div class="mb-6">
                 <label class="block text-gray-800 text-xs font-bold mb-1">URL:</label>
-                <input type="text" id="editUrl" class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-white">
+                <input type="text" id="editUrl" class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-white rounded-xl">
             </div>
             
             <div class="flex justify-end gap-3">
-                <button onclick="saveEdit()" class="px-6 py-2 bg-gray-800 text-white border-2 border-gray-800 hover:bg-gray-700 font-bold">
+                <button onclick="saveEdit()" class="px-6 py-2 bg-gray-800 text-white border-2 border-gray-800 hover:bg-gray-700 font-bold rounded-xl">
                     OK
                 </button>
             </div>
@@ -182,8 +185,16 @@
         setupEnterKey();
 
         // 搜尋功能監聽
-        document.getElementById('searchInput').addEventListener('input', function(e) {
+        const searchInput = document.getElementById('searchInput');
+
+        searchInput.addEventListener('input', function(e) {
             renderList(e.target.value);
+        });
+
+        // 修正：在 JS 中監聽點擊清除事件，解決 renderList 未定義的問題
+        searchInput.addEventListener('click', function() {
+            this.value = '';
+            renderList('');
         });
 
         // 讀取資料
@@ -225,7 +236,7 @@
             // 判斷是否為搜尋狀態
             const isSearching = filterText.length > 0;
             
-            // 如果正在搜尋，停用排序功能
+            // 如果正在搜尋，禁用排序功能
             if (sortableInstance) {
                 sortableInstance.option("disabled", isSearching);
             }
@@ -236,7 +247,8 @@
                 
                 filteredLinks.forEach((item) => {
                     const li = document.createElement('li');
-                    li.className = `bg-white p-3 border-2 border-gray-800 retro-shadow flex items-center gap-3 group ${isSearching ? 'drag-disabled' : ''}`;
+                    // 修改處：加入 rounded-xl
+                    li.className = `bg-white p-3 border-2 border-gray-800 retro-shadow flex items-center gap-3 group rounded-xl ${isSearching ? 'drag-disabled' : ''}`;
                     li.dataset.id = item.id;
                     
                     li.innerHTML = `
@@ -246,24 +258,25 @@
                         
                         <div class="flex-grow min-w-0">
                             <div class="font-bold text-gray-900 truncate tracking-tight text-sm">${escapeHtml(item.desc)}</div>
-                            <div class="text-xs text-gray-500 truncate mt-1 font-mono">
+                            <div class="text-xs text-gray-500 break-all mt-1 font-mono">
                                 <a href="${item.url}" target="_blank" class="hover:text-orange-600 hover:underline decoration-2 underline-offset-2">> ${escapeHtml(item.url)}</a>
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-1">
+                        <div class="flex items-center gap-2 self-start">
+                            <!-- 修改處：操作按鈕加入 rounded-lg -->
                             <button onclick="copyToClipboard(this, '${escapeHtml(item.desc)}', '${escapeHtml(item.url)}')" 
-                                class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-gray-200 border-2 border-transparent hover:border-gray-800 transition-none rounded-none" title="COPY">
+                                class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-gray-200 border-2 border-transparent hover:border-gray-800 transition-none rounded-lg" title="COPY">
                                 <i class="fa-regular fa-copy"></i>
                             </button>
                             
                             <button onclick="openEditModal('${item.id}', '${escapeHtml(item.desc)}', '${escapeHtml(item.url)}')" 
-                                class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-gray-200 border-2 border-transparent hover:border-gray-800 transition-none rounded-none" title="EDIT">
+                                class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-gray-200 border-2 border-transparent hover:border-gray-800 transition-none rounded-lg" title="EDIT">
                                 <i class="fa-solid fa-pen"></i>
                             </button>
                             
                             <button onclick="deleteItem('${item.id}')" 
-                                class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-red-100 hover:text-red-600 border-2 border-transparent hover:border-gray-800 transition-none rounded-none" title="DELETE">
+                                class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-red-100 hover:text-red-600 border-2 border-transparent hover:border-gray-800 transition-none rounded-lg" title="DELETE">
                                 <i class="fa-solid fa-xmark"></i>
                             </button>
                         </div>
@@ -305,8 +318,8 @@
                 descInput.value = '';
                 urlInput.value = '';
                 descInput.focus();
-                // 清空搜尋框以顯示新項目
                 document.getElementById('searchInput').value = '';
+                renderList(''); // 確保列表重置
             }).catch(error => {
                 console.error(error);
                 alert("ERROR: WRITE_FAILED");
@@ -367,7 +380,6 @@
             animation: 0,
             ghostClass: 'sortable-ghost',
             onEnd: function (evt) {
-                // 如果正在搜尋，不執行排序更新
                 if (document.getElementById('searchInput').value.length > 0) return;
 
                 const items = el.querySelectorAll('li');
