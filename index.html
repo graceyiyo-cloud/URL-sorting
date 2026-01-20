@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的網址管理器 (Retro Rounded)</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- SortableJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
     <style>
@@ -43,7 +40,7 @@
             color: #ea580c;
         }
         
-        /* 搜尋時禁用拖曳的樣式 */
+        /* 搜尋時停用拖曳的樣式 */
         .drag-disabled .drag-handle {
             cursor: not-allowed;
             color: #e5e7eb;
@@ -68,27 +65,23 @@
 
     <div class="max-w-lg mx-auto px-4 py-4">
         
-        <!-- 標題 -->
         <div class="text-center mb-4 border-b-4 border-gray-800 pb-2">
             <h1 class="text-2xl font-bold text-gray-800 tracking-wider uppercase">
                 <i class="fa-solid fa-floppy-disk mr-2"></i>URL_MANAGER
             </h1>
         </div>
 
-        <!-- 新增區塊 (加入 rounded-2xl) -->
         <div class="bg-[#fffef0] p-4 border-2 border-gray-800 retro-shadow mb-4 rounded-2xl">
             <h2 class="text-sm font-bold text-gray-800 mb-2 uppercase border-b-2 border-gray-200 pb-1">
                 > Create New Entry
             </h2>
             <div class="flex flex-col gap-2">
-                <!-- 輸入框加入 rounded-xl -->
                 <input type="text" id="newDesc" placeholder="輸入說明 (按 Enter 新增)" 
                     class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-gray-50 text-gray-800 placeholder-gray-400 text-sm rounded-xl">
                 
                 <input type="url" id="newUrl" placeholder="輸入網址 (按 Enter 新增)" 
                     class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-gray-50 text-gray-800 placeholder-gray-400 text-sm rounded-xl">
                 
-                <!-- 按鈕加入 rounded-xl -->
                 <button onclick="addItem()" 
                     class="w-full bg-orange-600 text-white py-2 border-2 border-gray-800 retro-shadow hover:bg-orange-500 transition-none font-bold tracking-widest mt-1 text-sm rounded-xl">
                     [ SAVE ]
@@ -96,22 +89,18 @@
             </div>
         </div>
 
-        <!-- 搜尋區塊 -->
         <div class="mb-6">
             <div class="relative">
                 <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400 z-10"></i>
-                <!-- 修正：移除 inline onclick，改用 JS 監聽 -->
                 <input type="text" id="searchInput" placeholder="SEARCH_DATA... (點擊清除)" 
                     class="retro-input w-full pl-10 pr-4 py-2 border-2 border-gray-800 bg-white text-gray-800 placeholder-gray-400 text-sm rounded-xl relative z-0">
             </div>
         </div>
 
-        <!-- 列表區塊 -->
         <div id="loading" class="loading-spinner"></div>
         <div id="list-container" class="hidden">
             <ul id="link-list" class="space-y-4">
-                <!-- Javascript 會將內容渲染在這裡 -->
-            </ul>
+                </ul>
         </div>
         
         <p id="empty-msg" class="text-center text-gray-600 mt-8 hidden font-bold">
@@ -119,7 +108,6 @@
         </p>
     </div>
 
-    <!-- 編輯 Modal (加入 rounded-2xl) -->
     <div id="editModal" class="fixed inset-0 bg-gray-800 bg-opacity-80 hidden flex items-center justify-center z-50 px-4">
         <div class="bg-[#fffef0] border-4 border-gray-800 p-6 w-full max-w-sm retro-shadow relative rounded-2xl">
             <button onclick="closeEditModal()" class="absolute top-2 right-3 text-gray-800 hover:text-red-600 font-bold text-xl px-2">
@@ -148,7 +136,6 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, onValue, push, set, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -191,7 +178,6 @@
             renderList(e.target.value);
         });
 
-        // 修正：在 JS 中監聽點擊清除事件，解決 renderList 未定義的問題
         searchInput.addEventListener('click', function() {
             this.value = '';
             renderList('');
@@ -236,7 +222,7 @@
             // 判斷是否為搜尋狀態
             const isSearching = filterText.length > 0;
             
-            // 如果正在搜尋，禁用排序功能
+            // 如果正在搜尋，停用排序功能
             if (sortableInstance) {
                 sortableInstance.option("disabled", isSearching);
             }
@@ -247,38 +233,39 @@
                 
                 filteredLinks.forEach((item) => {
                     const li = document.createElement('li');
-                    // 修改處：加入 rounded-xl
-                    li.className = `bg-white p-3 border-2 border-gray-800 retro-shadow flex items-center gap-3 group rounded-xl ${isSearching ? 'drag-disabled' : ''}`;
+                    // 為了適應新佈局，使用 flex items-stretch 讓左右等高
+                    li.className = `bg-white p-3 border-2 border-gray-800 retro-shadow flex items-stretch gap-3 group rounded-xl ${isSearching ? 'drag-disabled' : ''}`;
                     li.dataset.id = item.id;
                     
                     li.innerHTML = `
-                        <div class="drag-handle p-2 ${isSearching ? '' : 'cursor-grab active:cursor-grabbing'} border-r-2 border-gray-200 pr-3">
+                        <div class="drag-handle p-2 ${isSearching ? '' : 'cursor-grab active:cursor-grabbing'} border-r-2 border-gray-200 pr-3 flex items-center justify-center">
                             <i class="fa-solid ${isSearching ? 'fa-ban text-gray-300' : 'fa-grip-vertical'}"></i>
                         </div>
                         
-                        <div class="flex-grow min-w-0">
-                            <div class="font-bold text-gray-900 truncate tracking-tight text-sm">${escapeHtml(item.desc)}</div>
-                            <div class="text-xs text-gray-500 break-all mt-1 font-mono">
-                                <a href="${item.url}" target="_blank" class="hover:text-orange-600 hover:underline decoration-2 underline-offset-2">> ${escapeHtml(item.url)}</a>
+                        <div class="flex-grow min-w-0 flex flex-col justify-between">
+                            <div class="mb-2">
+                                <div class="font-bold text-gray-900 truncate tracking-tight text-sm">${escapeHtml(item.desc)}</div>
+                                <div class="text-xs text-gray-500 break-all mt-1 font-mono">
+                                    <a href="${item.url}" target="_blank" class="hover:text-orange-600 hover:underline decoration-2 underline-offset-2">> ${escapeHtml(item.url)}</a>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="flex items-center gap-2 self-start">
-                            <!-- 修改處：操作按鈕加入 rounded-lg -->
-                            <button onclick="copyToClipboard(this, '${escapeHtml(item.desc)}', '${escapeHtml(item.url)}')" 
-                                class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-gray-200 border-2 border-transparent hover:border-gray-800 transition-none rounded-lg" title="COPY">
-                                <i class="fa-regular fa-copy"></i>
-                            </button>
-                            
-                            <button onclick="openEditModal('${item.id}', '${escapeHtml(item.desc)}', '${escapeHtml(item.url)}')" 
-                                class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-gray-200 border-2 border-transparent hover:border-gray-800 transition-none rounded-lg" title="EDIT">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-                            
-                            <button onclick="deleteItem('${item.id}')" 
-                                class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-red-100 hover:text-red-600 border-2 border-transparent hover:border-gray-800 transition-none rounded-lg" title="DELETE">
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
+                            <div class="flex items-center gap-2 justify-end border-t-2 border-gray-100 pt-2 mt-1">
+                                <button onclick="copyToClipboard(this, '${escapeHtml(item.desc)}', '${escapeHtml(item.url)}')" 
+                                    class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-gray-200 border-2 border-transparent hover:border-gray-800 transition-none rounded-lg" title="COPY">
+                                    <i class="fa-regular fa-copy"></i>
+                                </button>
+                                
+                                <button onclick="openEditModal('${item.id}', '${escapeHtml(item.desc)}', '${escapeHtml(item.url)}')" 
+                                    class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-gray-200 border-2 border-transparent hover:border-gray-800 transition-none rounded-lg" title="EDIT">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                
+                                <button onclick="deleteItem('${item.id}')" 
+                                    class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-red-100 hover:text-red-600 border-2 border-transparent hover:border-gray-800 transition-none rounded-lg" title="DELETE">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
                         </div>
                     `;
                     listEl.appendChild(li);
@@ -319,7 +306,7 @@
                 urlInput.value = '';
                 descInput.focus();
                 document.getElementById('searchInput').value = '';
-                renderList(''); // 確保列表重置
+                renderList(''); // 確保列表重設
             }).catch(error => {
                 console.error(error);
                 alert("ERROR: WRITE_FAILED");
