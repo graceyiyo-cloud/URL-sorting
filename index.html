@@ -4,22 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的網址管理器 (Retro Ver.)</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- SortableJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
     <style>
         /* 復古風格設定 */
         body {
-            font-family: 'Courier New', Courier, monospace; /* 打字機字體 */
-            background-color: #f0e6d2; /* 復古米黃色背景 */
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #f0e6d2;
             background-image: radial-gradient(#d4c5a5 1px, transparent 1px);
             background-size: 20px 20px;
         }
 
-        /* 復古硬陰影效果 */
         .retro-shadow {
-            box-shadow: 4px 4px 0px 0px #1f2937; /* 深灰/黑色硬陰影 */
+            box-shadow: 4px 4px 0px 0px #1f2937;
         }
         .retro-shadow:active {
             box-shadow: 2px 2px 0px 0px #1f2937;
@@ -30,7 +32,7 @@
         .retro-input:focus {
             outline: none;
             background-color: #fff;
-            box-shadow: 4px 4px 0px 0px #ea580c; /* 聚焦時變成橘色陰影 */
+            box-shadow: 4px 4px 0px 0px #ea580c;
         }
 
         .drag-handle {
@@ -38,9 +40,15 @@
             color: #9ca3af;
         }
         .drag-handle:hover {
-            color: #ea580c; /* 橘色 */
+            color: #ea580c;
         }
         
+        /* 搜尋時停用拖曳的樣式 */
+        .drag-disabled .drag-handle {
+            cursor: not-allowed;
+            color: #e5e7eb;
+        }
+
         .loading-spinner {
             border: 4px solid #f0e6d2;
             border-top: 4px solid #1f2937;
@@ -58,37 +66,49 @@
 </head>
 <body class="pb-10 min-h-screen">
 
-    <div class="max-w-lg mx-auto px-4 py-8">
+    <div class="max-w-lg mx-auto px-4 py-4">
         
-        <div class="text-center mb-8 border-b-4 border-gray-800 pb-4">
+        <!-- 標題 (縮減間距) -->
+        <div class="text-center mb-4 border-b-4 border-gray-800 pb-2">
             <h1 class="text-2xl font-bold text-gray-800 tracking-wider uppercase">
                 <i class="fa-solid fa-floppy-disk mr-2"></i>URL_MANAGER
             </h1>
-            <p class="text-sm text-gray-600 mt-2">v.1998 // CLOUD_SYNC_ON</p>
         </div>
 
-        <div class="bg-[#fffef0] p-6 border-2 border-gray-800 retro-shadow mb-8">
-            <h2 class="text-sm font-bold text-gray-800 mb-4 uppercase border-b-2 border-gray-200 pb-1">
+        <!-- 新增區塊 -->
+        <div class="bg-[#fffef0] p-4 border-2 border-gray-800 retro-shadow mb-4">
+            <h2 class="text-sm font-bold text-gray-800 mb-2 uppercase border-b-2 border-gray-200 pb-1">
                 > Create New Entry
             </h2>
-            <div class="flex flex-col gap-3">
+            <div class="flex flex-col gap-2">
                 <input type="text" id="newDesc" placeholder="輸入說明 (按 Enter 新增)" 
-                    class="retro-input w-full px-4 py-2 border-2 border-gray-800 bg-gray-50 text-gray-800 placeholder-gray-400">
+                    class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-gray-50 text-gray-800 placeholder-gray-400 text-sm">
                 
                 <input type="url" id="newUrl" placeholder="輸入網址 (按 Enter 新增)" 
-                    class="retro-input w-full px-4 py-2 border-2 border-gray-800 bg-gray-50 text-gray-800 placeholder-gray-400">
+                    class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-gray-50 text-gray-800 placeholder-gray-400 text-sm">
                 
                 <button onclick="addItem()" 
-                    class="w-full bg-orange-600 text-white py-2 border-2 border-gray-800 retro-shadow hover:bg-orange-500 transition-none font-bold tracking-widest mt-2">
+                    class="w-full bg-orange-600 text-white py-2 border-2 border-gray-800 retro-shadow hover:bg-orange-500 transition-none font-bold tracking-widest mt-1 text-sm">
                     [ SAVE ]
                 </button>
             </div>
         </div>
 
+        <!-- 搜尋區塊 (新增) -->
+        <div class="mb-6">
+            <div class="relative">
+                <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400"></i>
+                <input type="text" id="searchInput" placeholder="SEARCH_DATA..." 
+                    class="retro-input w-full pl-10 pr-4 py-2 border-2 border-gray-800 bg-white text-gray-800 placeholder-gray-400 text-sm">
+            </div>
+        </div>
+
+        <!-- 列表區塊 -->
         <div id="loading" class="loading-spinner"></div>
         <div id="list-container" class="hidden">
             <ul id="link-list" class="space-y-4">
-                </ul>
+                <!-- Javascript 會將內容渲染在這裡 -->
+            </ul>
         </div>
         
         <p id="empty-msg" class="text-center text-gray-600 mt-8 hidden font-bold">
@@ -96,6 +116,7 @@
         </p>
     </div>
 
+    <!-- 編輯 Modal (復古風) -->
     <div id="editModal" class="fixed inset-0 bg-gray-800 bg-opacity-80 hidden flex items-center justify-center z-50 px-4">
         <div class="bg-[#fffef0] border-4 border-gray-800 p-6 w-full max-w-sm retro-shadow relative">
             <button onclick="closeEditModal()" class="absolute top-2 right-2 text-gray-800 hover:text-red-600 font-bold text-xl px-2">
@@ -124,13 +145,11 @@
         </div>
     </div>
 
+    <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, onValue, push, set, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // ==========================================
-        // 您的 Firebase 組態 (維持不變)
-        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyDlxwcj-PSv2Bc1UFgjlVnKUmIzvwXmBig",
             authDomain: "url-sorting.firebaseapp.com",
@@ -146,7 +165,8 @@
         const db = getDatabase(app);
         const dbRef = ref(db, 'links');
 
-        let currentLinks = [];
+        let allLinks = []; // 儲存所有資料
+        let sortableInstance = null; // Sortable 實例
 
         // 監聽 Enter 鍵功能
         function setupEnterKey() {
@@ -161,74 +181,101 @@
         }
         setupEnterKey();
 
+        // 搜尋功能監聽
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            renderList(e.target.value);
+        });
+
+        // 讀取資料
         onValue(dbRef, (snapshot) => {
             const data = snapshot.val();
-            const listEl = document.getElementById('link-list');
             const loadingEl = document.getElementById('loading');
-            const containerEl = document.getElementById('list-container');
-            const emptyMsg = document.getElementById('empty-msg');
-
+            
             loadingEl.style.display = 'none';
-            listEl.innerHTML = '';
-            currentLinks = [];
+            allLinks = [];
 
             if (data) {
                 Object.keys(data).forEach(key => {
-                    currentLinks.push({ id: key, ...data[key] });
+                    allLinks.push({ id: key, ...data[key] });
                 });
+                // 預設排序
+                allLinks.sort((a, b) => (a.order || 0) - (b.order || 0));
+            }
+
+            // 重新渲染列表 (保留目前的搜尋文字)
+            const currentSearch = document.getElementById('searchInput').value;
+            renderList(currentSearch);
+        });
+
+        // 渲染列表函式
+        function renderList(filterText = '') {
+            const listEl = document.getElementById('link-list');
+            const containerEl = document.getElementById('list-container');
+            const emptyMsg = document.getElementById('empty-msg');
+            
+            listEl.innerHTML = '';
+            
+            // 篩選資料
+            const filteredLinks = allLinks.filter(item => {
+                const term = filterText.toLowerCase();
+                return (item.desc && item.desc.toLowerCase().includes(term)) || 
+                       (item.url && item.url.toLowerCase().includes(term));
+            });
+
+            // 判斷是否為搜尋狀態
+            const isSearching = filterText.length > 0;
+            
+            // 如果正在搜尋，停用排序功能
+            if (sortableInstance) {
+                sortableInstance.option("disabled", isSearching);
+            }
+
+            if (filteredLinks.length > 0) {
+                containerEl.classList.remove('hidden');
+                emptyMsg.classList.add('hidden');
                 
-                currentLinks.sort((a, b) => (a.order || 0) - (b.order || 0));
-
-                if (currentLinks.length > 0) {
-                    containerEl.classList.remove('hidden');
-                    emptyMsg.classList.add('hidden');
+                filteredLinks.forEach((item) => {
+                    const li = document.createElement('li');
+                    li.className = `bg-white p-3 border-2 border-gray-800 retro-shadow flex items-center gap-3 group ${isSearching ? 'drag-disabled' : ''}`;
+                    li.dataset.id = item.id;
                     
-                    currentLinks.forEach((item) => {
-                        const li = document.createElement('li');
-                        // 復古卡片樣式
-                        li.className = 'bg-white p-3 border-2 border-gray-800 retro-shadow flex items-center gap-3 group';
-                        li.dataset.id = item.id;
+                    li.innerHTML = `
+                        <div class="drag-handle p-2 ${isSearching ? '' : 'cursor-grab active:cursor-grabbing'} border-r-2 border-gray-200 pr-3">
+                            <i class="fa-solid ${isSearching ? 'fa-ban text-gray-300' : 'fa-grip-vertical'}"></i>
+                        </div>
                         
-                        li.innerHTML = `
-                            <div class="drag-handle p-2 cursor-grab active:cursor-grabbing border-r-2 border-gray-200 pr-3">
-                                <i class="fa-solid fa-grip-vertical"></i>
+                        <div class="flex-grow min-w-0">
+                            <div class="font-bold text-gray-900 truncate tracking-tight text-sm">${escapeHtml(item.desc)}</div>
+                            <div class="text-xs text-gray-500 truncate mt-1 font-mono">
+                                <a href="${item.url}" target="_blank" class="hover:text-orange-600 hover:underline decoration-2 underline-offset-2">> ${escapeHtml(item.url)}</a>
                             </div>
-                            
-                            <div class="flex-grow min-w-0">
-                                <div class="font-bold text-gray-900 truncate tracking-tight text-sm">${escapeHtml(item.desc)}</div>
-                                <div class="text-xs text-gray-500 truncate mt-1 font-mono">
-                                    <a href="${item.url}" target="_blank" class="hover:text-orange-600 hover:underline decoration-2 underline-offset-2">> ${escapeHtml(item.url)}</a>
-                                </div>
-                            </div>
+                        </div>
 
-                            <div class="flex items-center gap-1">
-                                <button onclick="copyToClipboard(this, '${escapeHtml(item.desc)}', '${escapeHtml(item.url)}')" 
-                                    class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-gray-200 border-2 border-transparent hover:border-gray-800 transition-none rounded-none" title="COPY">
-                                    <i class="fa-regular fa-copy"></i>
-                                </button>
-                                
-                                <button onclick="openEditModal('${item.id}', '${escapeHtml(item.desc)}', '${escapeHtml(item.url)}')" 
-                                    class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-gray-200 border-2 border-transparent hover:border-gray-800 transition-none rounded-none" title="EDIT">
-                                    <i class="fa-solid fa-pen"></i>
-                                </button>
-                                
-                                <button onclick="deleteItem('${item.id}')" 
-                                    class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-red-100 hover:text-red-600 border-2 border-transparent hover:border-gray-800 transition-none rounded-none" title="DELETE">
-                                    <i class="fa-solid fa-xmark"></i>
-                                </button>
-                            </div>
-                        `;
-                        listEl.appendChild(li);
-                    });
-                } else {
-                    containerEl.classList.add('hidden');
-                    emptyMsg.classList.remove('hidden');
-                }
+                        <div class="flex items-center gap-1">
+                            <button onclick="copyToClipboard(this, '${escapeHtml(item.desc)}', '${escapeHtml(item.url)}')" 
+                                class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-gray-200 border-2 border-transparent hover:border-gray-800 transition-none rounded-none" title="COPY">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                            
+                            <button onclick="openEditModal('${item.id}', '${escapeHtml(item.desc)}', '${escapeHtml(item.url)}')" 
+                                class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-gray-200 border-2 border-transparent hover:border-gray-800 transition-none rounded-none" title="EDIT">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            
+                            <button onclick="deleteItem('${item.id}')" 
+                                class="w-8 h-8 flex items-center justify-center text-gray-800 hover:bg-red-100 hover:text-red-600 border-2 border-transparent hover:border-gray-800 transition-none rounded-none" title="DELETE">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    `;
+                    listEl.appendChild(li);
+                });
             } else {
                 containerEl.classList.add('hidden');
                 emptyMsg.classList.remove('hidden');
+                emptyMsg.textContent = isSearching ? "[ NO MATCHING RESULTS ]" : "[ SYSTEM: NO DATA FOUND ]";
             }
-        });
+        }
 
         window.addItem = function() {
             const descInput = document.getElementById('newDesc');
@@ -237,7 +284,6 @@
             let url = urlInput.value.trim();
 
             if (!desc || !url) {
-                // 如果是空的，做個簡單的搖晃動畫提示
                 descInput.classList.add('ring-2', 'ring-red-500');
                 setTimeout(() => descInput.classList.remove('ring-2', 'ring-red-500'), 500);
                 return;
@@ -247,7 +293,7 @@
                 url = 'https://' + url;
             }
 
-            const newOrder = currentLinks.length > 0 ? (currentLinks[currentLinks.length - 1].order || 0) + 1 : 0;
+            const newOrder = allLinks.length > 0 ? (allLinks[allLinks.length - 1].order || 0) + 1 : 0;
 
             const newRef = push(dbRef);
             set(newRef, {
@@ -258,8 +304,9 @@
             }).then(() => {
                 descInput.value = '';
                 urlInput.value = '';
-                // 聚焦回第一個輸入框，方便連續輸入
                 descInput.focus();
+                // 清空搜尋框以顯示新項目
+                document.getElementById('searchInput').value = '';
             }).catch(error => {
                 console.error(error);
                 alert("ERROR: WRITE_FAILED");
@@ -272,23 +319,16 @@
             }
         };
 
-        // 修改後的複製功能：不跳 Alert，只變更按鈕外觀
         window.copyToClipboard = function(btnElement, desc, url) {
             const textToCopy = `${desc} - ${url}`;
             navigator.clipboard.writeText(textToCopy).then(() => {
-                // 1. 保存原始圖示
                 const originalIcon = btnElement.innerHTML;
-                
-                // 2. 變更為打勾圖示與顏色
                 btnElement.innerHTML = '<i class="fa-solid fa-check"></i>';
                 btnElement.classList.add('text-green-600', 'bg-green-100', 'border-green-600');
-                
-                // 3. 1秒後恢復原狀
                 setTimeout(() => {
                     btnElement.innerHTML = originalIcon;
                     btnElement.classList.remove('text-green-600', 'bg-green-100', 'border-green-600');
                 }, 1000);
-                
             }).catch(err => {
                 console.error('Copy failed', err);
             });
@@ -320,12 +360,16 @@
             });
         };
 
+        // 初始化 SortableJS
         const el = document.getElementById('link-list');
-        Sortable.create(el, {
+        sortableInstance = Sortable.create(el, {
             handle: '.drag-handle',
-            animation: 0, // 復古風不需要滑順動畫
+            animation: 0,
             ghostClass: 'sortable-ghost',
             onEnd: function (evt) {
+                // 如果正在搜尋，不執行排序更新
+                if (document.getElementById('searchInput').value.length > 0) return;
+
                 const items = el.querySelectorAll('li');
                 const updates = {};
                 items.forEach((item, index) => {
