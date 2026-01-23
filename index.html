@@ -36,28 +36,41 @@
             box-shadow: 0 0 0 3px rgba(143, 180, 162, 0.15);
         }
 
-        /* 拖曳占位符 */
+        /* 拖曳預留位置 */
         .sortable-ghost {
             opacity: 0.4;
             background-color: #8fb4a2 !important;
             border: 2px dashed #4a3f35 !important;
         }
 
-        /* 分類標籤 */
+        /* 分類標籤：白底、彩色邊框與文字 */
         .filter-chip {
             transition: all 0.2s;
-            border: 1.5px solid #d1c7b7;
             white-space: nowrap;
             flex-shrink: 0;
+            font-size: 0.85rem; 
+            background-color: #ffffff;
+            border-width: 1.5px;
+            border-style: solid;
         }
+        
+        /* 選中狀態：滿色背景 */
         .filter-chip.active {
-            background-color: #8fb4a2;
-            color: white;
-            border-color: #6d8a7c;
+            color: white !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
-        .filter-chip.inactive {
-            background-color: #fff;
-            color: #6b5e51;
+
+        /* 網址明細內的小標籤格式 */
+        .item-tag {
+            background-color: #ffffff;
+            border-width: 1px;
+            border-style: solid;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-left: 6px;
+            display: inline-block;
         }
 
         .tab-btn {
@@ -65,6 +78,7 @@
             color: #6b5e51;
             border: 2px solid #d1c7b7;
             border-bottom: none;
+            font-size: 0.8rem;
         }
         .tab-btn.active {
             background-color: #fff;
@@ -86,12 +100,10 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* 隱形拖曳手柄 */
         .hidden-handle {
-            width: 8px;
+            width: 10px;
             cursor: grab;
         }
-        .hidden-handle:active { cursor: grabbing; }
     </style>
 </head>
 <body class="pb-20 min-h-screen flex flex-col items-center">
@@ -105,10 +117,10 @@
 
         <div class="mb-6">
             <div class="flex gap-1">
-                <button onclick="switchTab('link')" id="tab-link" class="tab-btn active px-5 py-2 rounded-t-xl text-xs font-bold">
+                <button onclick="switchTab('link')" id="tab-link" class="tab-btn active px-5 py-2 rounded-t-xl font-bold">
                     新增連結
                 </button>
-                <button onclick="switchTab('category')" id="tab-category" class="tab-btn px-5 py-2 rounded-t-xl text-xs font-bold">
+                <button onclick="switchTab('category')" id="tab-category" class="tab-btn px-5 py-2 rounded-t-xl font-bold">
                     新增分類
                 </button>
             </div>
@@ -116,33 +128,33 @@
             <div class="bg-white p-4 border-2 border-[#d1c7b7] ghibli-shadow rounded-b-2xl rounded-tr-2xl">
                 <div id="panel-link" class="flex flex-col gap-3">
                     <div class="flex gap-2">
-                        <select id="newLinkCat" class="ghibli-input w-1/3 px-2 py-2 rounded-lg text-xs font-bold text-[#6b5e51]">
+                        <select id="newLinkCat" class="ghibli-input w-1/3 px-2 py-2.5 rounded-lg text-xs font-bold text-[#6b5e51]">
                             <option value="">未分類</option>
                         </select>
-                        <input type="text" id="newDesc" placeholder="輸入標題" class="ghibli-input w-2/3 px-3 py-2 text-xs rounded-lg">
+                        <input type="text" id="newDesc" placeholder="輸入標題" class="ghibli-input w-2/3 px-3 py-2.5 text-xs rounded-lg">
                     </div>
-                    <input type="url" id="newUrl" placeholder="輸入網址 (https://...)" class="ghibli-input w-full px-3 py-2 text-xs rounded-lg">
-                    <button onclick="addItem()" class="w-full bg-[#8fb4a2] text-white py-2.5 rounded-xl hover:bg-[#7da390] font-bold text-xs transition-colors">
+                    <input type="url" id="newUrl" placeholder="輸入網址 (https://...)" class="ghibli-input w-full px-3 py-2.5 text-xs rounded-lg">
+                    <button onclick="addItem()" class="w-full bg-[#8fb4a2] text-white py-2.5 rounded-xl hover:bg-[#7da390] font-bold text-sm transition-colors">
                         新增連結 <i class="fa-solid fa-plus ml-1"></i>
                     </button>
                 </div>
 
                 <div id="panel-category" class="hidden flex flex-col gap-3">
-                    <input type="text" id="newCatName" placeholder="輸入新分類名稱" class="ghibli-input w-full px-3 py-2 text-xs rounded-lg">
-                    <button onclick="addCategory()" class="w-full bg-[#5c8a97] text-white py-2.5 rounded-xl hover:bg-[#4d7885] font-bold text-xs transition-colors">
+                    <input type="text" id="newCatName" placeholder="輸入新分類名稱" class="ghibli-input w-full px-3 py-2.5 text-xs rounded-lg">
+                    <button onclick="addCategory()" class="w-full bg-[#5c8a97] text-white py-2.5 rounded-xl hover:bg-[#4d7885] font-bold text-sm transition-colors">
                         建立分類 <i class="fa-solid fa-folder ml-1"></i>
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="mb-1">
-            <div class="flex overflow-x-auto gap-2 no-scrollbar px-1 py-1 items-center" id="filter-bar"></div>
+        <div class="mb-4">
+            <div class="flex overflow-x-auto gap-3 no-scrollbar px-1 py-2 items-center" id="filter-bar"></div>
         </div>
 
         <div id="cat-toolbar" class="hidden mb-3 flex items-center justify-between border-b border-[#d1c7b7] pb-2 px-1">
             <div class="flex items-center gap-2">
-                <span class="text-xs font-bold bg-[#f0ede4] text-[#6b5e51] px-2 py-1 rounded-lg">
+                <span id="current-cat-badge" class="text-xs font-bold text-white px-3 py-1 rounded-lg">
                     <i class="fa-solid fa-folder-open mr-1"></i>
                     <span id="current-cat-name-display">分類名稱</span>
                 </span>
@@ -153,9 +165,9 @@
         </div>
 
         <div class="relative mb-4">
-            <i class="fa-solid fa-search absolute left-3 top-2.5 text-[#b7ad9d] text-xs"></i>
+            <i class="fa-solid fa-search absolute left-4 top-2.5 text-[#b7ad9d] text-xs"></i>
             <input type="text" id="searchInput" placeholder="搜尋..." 
-                class="ghibli-input w-full pl-9 pr-4 py-2 border-2 rounded-xl text-xs font-bold">
+                class="ghibli-input w-full pl-10 pr-4 py-2 border-2 rounded-xl text-xs font-bold">
         </div>
 
         <div id="loading" class="loading-spinner mx-auto my-10"></div>
@@ -175,20 +187,20 @@
             <div class="space-y-3">
                 <div>
                     <label class="block text-[#a89d8d] text-[10px] font-bold mb-1 ml-1">所屬分類</label>
-                    <select id="editCatId" class="ghibli-input w-full px-3 py-2 rounded-lg text-xs font-bold"></select>
+                    <select id="editCatId" class="ghibli-input w-full px-3 py-2.5 rounded-lg text-xs font-bold"></select>
                 </div>
                 <div>
                     <label class="block text-[#a89d8d] text-[10px] font-bold mb-1 ml-1">標題描述</label>
-                    <input type="text" id="editDesc" class="ghibli-input w-full px-3 py-2 rounded-lg text-xs">
+                    <input type="text" id="editDesc" class="ghibli-input w-full px-3 py-2.5 rounded-lg text-xs">
                 </div>
                 <div>
                     <label class="block text-[#a89d8d] text-[10px] font-bold mb-1 ml-1">網址 URL</label>
-                    <input type="text" id="editUrl" class="ghibli-input w-full px-3 py-2 rounded-lg text-[10px] font-mono">
+                    <input type="text" id="editUrl" class="ghibli-input w-full px-3 py-2.5 rounded-lg text-[10px] font-mono">
                 </div>
             </div>
             <div class="flex justify-between items-center mt-6 gap-3">
                 <button onclick="deleteCurrentItem()" class="px-4 py-2 text-red-400 font-bold text-xs hover:bg-red-50 rounded-lg">刪除</button>
-                <button onclick="saveEdit()" class="px-6 py-2 bg-[#8fb4a2] text-white font-bold rounded-xl text-xs">儲存更新</button>
+                <button onclick="saveEdit()" class="px-7 py-2.5 bg-[#8fb4a2] text-white font-bold rounded-xl text-xs">儲存更新</button>
             </div>
         </div>
     </div>
@@ -202,10 +214,10 @@
                 <i class="fa-solid fa-folder"></i> 編輯分類
             </h3>
             <input type="hidden" id="editCatKey">
-            <input type="text" id="editCatNameInput" class="ghibli-input w-full px-3 py-2 rounded-lg text-xs font-bold">
+            <input type="text" id="editCatNameInput" class="ghibli-input w-full px-3 py-2.5 rounded-lg text-xs font-bold">
             <div class="flex justify-between items-center mt-6 gap-3">
                 <button onclick="deleteCurrentCategory()" class="px-4 py-2 text-red-400 font-bold text-xs hover:bg-red-50 rounded-lg">刪除分類</button>
-                <button onclick="saveCatEdit()" class="px-6 py-2 bg-[#5c8a97] text-white font-bold rounded-xl text-xs">儲存</button>
+                <button onclick="saveCatEdit()" class="px-7 py-2.5 bg-[#5c8a97] text-white font-bold rounded-xl text-xs">儲存</button>
             </div>
         </div>
     </div>
@@ -230,6 +242,16 @@
         let state = { links: [], categories: [], currentFilter: 'all' };
         let linkSortables = [];
         let catSortable = null;
+
+        const ghibliColors = ["#8fb4a2", "#5c8a97", "#d6a278", "#e3b04b", "#9b8b7a", "#a8c69f", "#7892a0", "#c8a49a"];
+
+        function getCatColor(id) {
+            if (id === 'all') return "#4a3f35";
+            if (id === 'uncategorized') return "#9b8b7a";
+            let hash = 0;
+            for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+            return ghibliColors[Math.abs(hash) % ghibliColors.length];
+        }
 
         function appendExternalBrowserParam(url) {
             if (!url) return url;
@@ -262,17 +284,14 @@
             const bar = document.getElementById('filter-bar');
             bar.innerHTML = '';
             if(catSortable) { catSortable.destroy(); catSortable = null; }
-
             bar.appendChild(createFilterChip('全部', 'all'));
             state.categories.forEach(cat => {
                 const catBtn = createFilterChip(cat.name, cat.id);
                 catBtn.dataset.catId = cat.id;
                 bar.appendChild(catBtn);
             });
-
             const hasUncategorized = state.links.some(l => !l.categoryId || !state.categories.find(c => c.id === l.categoryId));
             if (hasUncategorized) bar.appendChild(createFilterChip('未分類', 'uncategorized'));
-
             catSortable = Sortable.create(bar, {
                 animation: 200,
                 filter: '.static-chip',
@@ -290,8 +309,16 @@
         function createFilterChip(text, filterId) {
             const btn = document.createElement('button');
             const isActive = state.currentFilter === filterId;
-            btn.className = `filter-chip px-3 py-1.5 rounded-full font-bold text-xs ${isActive ? 'active' : 'inactive shadow-sm'}`;
+            const color = getCatColor(filterId);
+            btn.className = `filter-chip px-5 py-2 rounded-full font-bold transition-all duration-200 ${isActive ? 'active' : ''}`;
             btn.textContent = text;
+            if (isActive) {
+                btn.style.backgroundColor = color;
+                btn.style.borderColor = color;
+            } else {
+                btn.style.color = color;
+                btn.style.borderColor = color;
+            }
             if (filterId === 'all' || filterId === 'uncategorized') btn.classList.add('static-chip');
             btn.onclick = () => {
                 state.currentFilter = filterId;
@@ -311,6 +338,7 @@
                 if (currentCat) {
                     catToolbar.classList.remove('hidden');
                     document.getElementById('current-cat-name-display').textContent = currentCat.name;
+                    document.getElementById('current-cat-badge').style.backgroundColor = getCatColor(state.currentFilter);
                 } else catToolbar.classList.add('hidden');
             } else catToolbar.classList.add('hidden');
             renderMain(document.getElementById('searchInput').value);
@@ -323,14 +351,12 @@
             linkSortables = [];
             const term = filterText.toLowerCase();
             let hasData = false;
-
             const renderBlock = (cat, links, isUncat) => {
                 if (links.length > 0) {
                     renderCategoryBlock(container, cat, links, term.length > 0, isUncat);
                     hasData = true;
                 }
             };
-
             if (state.currentFilter === 'all') {
                 state.categories.forEach(cat => renderBlock(cat, state.links.filter(l => l.categoryId === cat.id && matchFilter(l, term)), false));
                 renderBlock({ id: 'uncategorized', name: '未分類' }, state.links.filter(l => (!l.categoryId || !state.categories.find(c => c.id === l.categoryId)) && matchFilter(l, term)), true);
@@ -347,23 +373,26 @@
 
         function renderCategoryBlock(container, cat, links, isSearching, isUncat) {
             const ul = document.createElement('ul');
-            ul.className = 'space-y-2 min-h-[10px]';
+            ul.className = 'space-y-2.5 min-h-[10px]';
             ul.dataset.catId = cat.id;
-
             links.forEach(link => {
                 const finalUrl = appendExternalBrowserParam(link.url);
                 const li = document.createElement('li');
                 li.className = `bg-white p-3 ghibli-shadow rounded-xl flex items-center gap-2 group transition-all hover:bg-[#faf9f6]`;
                 li.dataset.id = link.id;
-                let tag = (state.currentFilter === 'all' && !isUncat) ? `<span class="text-[9px] bg-[#f0ede4] text-[#a89d8d] px-1.5 py-0.5 rounded ml-1 font-bold">${escapeHtml(cat.name)}</span>` : '';
-
+                const catColor = getCatColor(cat.id);
+                
+                // 網址明細標籤：改為白底彩色線條字體
+                let tag = (state.currentFilter === 'all' && !isUncat) ? 
+                    `<span class="item-tag" style="color: ${catColor}; border-color: ${catColor}">${escapeHtml(cat.name)}</span>` : '';
+                
                 li.innerHTML = `
                     <div class="hidden-handle flex-shrink-0"></div>
                     <div class="flex-grow min-w-0">
-                        <div class="flex items-center"><span class="font-bold text-[#4a3f35] truncate text-xs">${escapeHtml(link.desc)}</span>${tag}</div>
+                        <div class="flex items-center"><span class="font-bold text-[#4a3f35] truncate text-sm">${escapeHtml(link.desc)}</span>${tag}</div>
                         <div class="text-[10px] text-[#5c8a97] truncate mt-0.5 font-mono"><a href="${finalUrl}" target="_blank">${escapeHtml(finalUrl)}</a></div>
                     </div>
-                    <div class="flex gap-1">
+                    <div class="flex gap-1.5">
                         <button onclick="copyToClipboard(this, '${escapeHtml(link.desc)}', '${escapeHtml(finalUrl)}')" class="w-7 h-7 flex items-center justify-center text-[#b7ad9d] hover:text-[#8fb4a2] transition-colors"><i class="fa-regular fa-copy text-xs"></i></button>
                         <button onclick="openEditModal('${link.id}', '${escapeHtml(link.desc)}', '${escapeHtml(link.url)}', '${link.categoryId || ''}')" class="w-7 h-7 flex items-center justify-center text-[#b7ad9d] hover:text-[#5c8a97] transition-colors"><i class="fa-solid fa-pen text-xs"></i></button>
                     </div>
@@ -371,13 +400,9 @@
                 ul.appendChild(li);
             });
             container.appendChild(ul);
-
             if (!isSearching) {
                 linkSortables.push(Sortable.create(ul, {
-                    group: 'shared-links',
-                    handle: 'li',
-                    animation: 200,
-                    ghostClass: 'sortable-ghost',
+                    group: 'shared-links', handle: 'li', animation: 200, ghostClass: 'sortable-ghost',
                     onEnd: (evt) => {
                         const updates = {};
                         const newCatId = evt.to.dataset.catId;
