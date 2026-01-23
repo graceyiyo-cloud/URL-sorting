@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>URL_Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,6 +16,7 @@
             background-image: radial-gradient(#e0d7c1 1px, transparent 1px);
             background-size: 24px 24px;
             color: #4a3f35;
+            -webkit-tap-highlight-color: transparent; /* 移除手機點擊灰框 */
         }
 
         /* 吉卜立風柔和陰影 */
@@ -43,6 +44,17 @@
             border: 2px dashed #4a3f35 !important;
         }
 
+        /* 分類導覽列修正：確保水平滑動順暢 */
+        #filter-bar {
+            display: flex;
+            flex-wrap: nowrap; /* 強制不換行 */
+            overflow-x: auto;  /* 開啟水平滾動 */
+            -webkit-overflow-scrolling: touch; /* iOS 流暢滾動 */
+            gap: 12px;
+            padding: 8px 4px;
+            scroll-behavior: smooth;
+        }
+
         /* 分類標籤：白底、彩色邊框與文字 */
         .filter-chip {
             transition: all 0.2s;
@@ -52,6 +64,9 @@
             background-color: #ffffff;
             border-width: 1.5px;
             border-style: solid;
+            cursor: pointer;
+            user-select: none;
+            touch-action: pan-x; /* 允許手指左右滑動而不觸發拖曳 */
         }
         
         /* 選中狀態：滿色背景 */
@@ -148,8 +163,8 @@
             </div>
         </div>
 
-        <div class="mb-4">
-            <div class="flex overflow-x-auto gap-3 no-scrollbar px-1 py-2 items-center" id="filter-bar"></div>
+        <div class="mb-4 w-full">
+            <div id="filter-bar" class="no-scrollbar"></div>
         </div>
 
         <div id="cat-toolbar" class="hidden mb-3 flex items-center justify-between border-b border-[#d1c7b7] pb-2 px-1">
@@ -292,8 +307,13 @@
             });
             const hasUncategorized = state.links.some(l => !l.categoryId || !state.categories.find(c => c.id === l.categoryId));
             if (hasUncategorized) bar.appendChild(createFilterChip('未分類', 'uncategorized'));
+            
+            // 手機版優化：加入 delay 避免滑動時觸發拖曳
             catSortable = Sortable.create(bar, {
                 animation: 200,
+                delay: 150, // 長按 150ms 才觸發拖曳
+                delayOnTouchOnly: true,
+                touchStartThreshold: 5, // 容許手抖的像素範圍
                 filter: '.static-chip',
                 onEnd: function () {
                     const updates = {};
@@ -320,6 +340,8 @@
                 btn.style.borderColor = color;
             }
             if (filterId === 'all' || filterId === 'uncategorized') btn.classList.add('static-chip');
+            
+            // 改用 onclick，搭配 Sortable 的 delay 能確保點擊反應
             btn.onclick = () => {
                 state.currentFilter = filterId;
                 renderFilterBar();
@@ -382,7 +404,6 @@
                 li.dataset.id = link.id;
                 const catColor = getCatColor(cat.id);
                 
-                // 網址明細標籤：改為白底彩色線條字體
                 let tag = (state.currentFilter === 'all' && !isUncat) ? 
                     `<span class="item-tag" style="color: ${catColor}; border-color: ${catColor}">${escapeHtml(cat.name)}</span>` : '';
                 
@@ -402,7 +423,9 @@
             container.appendChild(ul);
             if (!isSearching) {
                 linkSortables.push(Sortable.create(ul, {
-                    group: 'shared-links', handle: 'li', animation: 200, ghostClass: 'sortable-ghost',
+                    group: 'shared-links', handle: 'li', animation: 200, 
+                    delay: 150, delayOnTouchOnly: true, touchStartThreshold: 5,
+                    ghostClass: 'sortable-ghost',
                     onEnd: (evt) => {
                         const updates = {};
                         const newCatId = evt.to.dataset.catId;
