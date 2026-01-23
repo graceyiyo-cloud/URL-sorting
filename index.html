@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的網址管理器 (URL Manager)</title>
+    <title>URL_Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
@@ -11,286 +11,201 @@
     <style>
         /* 全域字體設定：嚴格使用無襯線體 */
         body {
-            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-            background-color: #f0e6d2;
-            background-image: radial-gradient(#d4c5a5 1px, transparent 1px);
-            background-size: 20px 20px;
-            color: #374151;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f7f3e9; 
+            background-image: radial-gradient(#e0d7c1 1px, transparent 1px);
+            background-size: 24px 24px;
+            color: #4a3f35;
         }
 
-        /* 復古陰影風格 */
-        .retro-shadow {
-            box-shadow: 4px 4px 0px 0px #374151;
-        }
-        .retro-shadow:active {
-            box-shadow: 2px 2px 0px 0px #374151;
-            transform: translate(2px, 2px);
+        /* 吉卜立風柔和陰影 */
+        .ghibli-shadow {
+            box-shadow: 0 4px 10px -2px rgba(74, 63, 53, 0.08);
+            border: 2px solid #d1c7b7;
         }
 
-        /* 輸入框聚焦樣式 */
-        .retro-input:focus {
+        .ghibli-input {
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 2px solid #d1c7b7;
+            transition: all 0.3s;
+        }
+        .ghibli-input:focus {
             outline: none;
+            border-color: #8fb4a2;
             background-color: #fff;
-            box-shadow: 4px 4px 0px 0px #ea580c;
-            border-color: #374151;
+            box-shadow: 0 0 0 3px rgba(143, 180, 162, 0.15);
         }
 
-        .drag-handle {
-            cursor: grab;
-            color: #9ca3af;
-        }
-        .drag-handle:active {
-            cursor: grabbing;
-        }
-        .drag-handle:hover {
-            color: #ea580c;
+        /* 拖曳占位符 */
+        .sortable-ghost {
+            opacity: 0.4;
+            background-color: #8fb4a2 !important;
+            border: 2px dashed #4a3f35 !important;
         }
 
-        /* 搜尋時停用拖曳 */
-        .drag-disabled .drag-handle {
-            cursor: not-allowed;
-            color: #e5e7eb;
-            pointer-events: none;
-        }
-
-        /* --- 連結列表 (垂直) 的拖曳定位線 --- */
-        ul .sortable-ghost {
-            opacity: 1 !important;
-            background-color: #ea580c !important; 
-            height: 4px !important;              
-            padding: 0 !important;
-            margin: 6px 0 !important;            
-            overflow: hidden !important;
-            border: none !important;
-            box-shadow: none !important;
-        }
-        ul .sortable-ghost * {
-            display: none !important;
-        }
-
-        /* --- 分類篩選列 (橫向) 的拖曳定位線 --- */
-        #filter-bar .sortable-ghost {
-            opacity: 1 !important;
-            background-color: #ea580c !important; 
-            width: 4px !important;                
-            height: 32px !important;             
-            padding: 0 !important;
-            margin: 0 4px !important;            
-            overflow: hidden !important;
-            border: none !important;
-            box-shadow: none !important;
-            transform: none !important;
-        }
-
-        .static-chip {
-            cursor: default;
-        }
-
-        .loading-spinner {
-            border: 4px solid #f0e6d2;
-            border-top: 4px solid #374151;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        
+        /* 分類標籤 */
         .filter-chip {
-            white-space: nowrap;
             transition: all 0.2s;
+            border: 1.5px solid #d1c7b7;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         .filter-chip.active {
-            background-color: #374151;
-            color: #fff;
-            border-color: #374151;
-            transform: translateY(2px);
-            box-shadow: none;
+            background-color: #8fb4a2;
+            color: white;
+            border-color: #6d8a7c;
         }
         .filter-chip.inactive {
             background-color: #fff;
-            color: #374151;
+            color: #6b5e51;
         }
 
-        .tab-btn.active {
-            background-color: #374151;
-            color: #fffef0;
-            border-color: #374151;
-        }
         .tab-btn {
-            background-color: #fffef0;
-            color: #374151;
+            background-color: #e8e2d5;
+            color: #6b5e51;
+            border: 2px solid #d1c7b7;
+            border-bottom: none;
         }
+        .tab-btn.active {
+            background-color: #fff;
+            color: #4a3f35;
+            border-color: #d1c7b7;
+            font-weight: bold;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .loading-spinner {
+            border: 4px solid #e8e2d5;
+            border-top: 4px solid #8fb4a2;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1.5s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* 隱形拖曳手柄 */
+        .hidden-handle {
+            width: 8px;
+            cursor: grab;
+        }
+        .hidden-handle:active { cursor: grabbing; }
     </style>
 </head>
 <body class="pb-20 min-h-screen flex flex-col items-center">
 
-    <div class="w-full max-w-lg px-4 py-6">
-        
-        <div class="text-center mb-6 border-b-4 border-gray-700 pb-3">
-            <h1 class="text-3xl font-black text-gray-800 tracking-tight uppercase">
-                <i class="fa-solid fa-link mr-2 text-orange-600"></i>URL_MANAGER
+    <div class="w-full max-w-lg px-4 mt-8">
+        <div class="text-center mb-4 border-b-2 border-[#d1c7b7] pb-1">
+            <h1 class="text-3xl font-black text-[#4a3f35] tracking-tight uppercase">
+                <i class="fa-solid fa-link text-[#8fb4a2] mr-1"></i>URL_MANAGER
             </h1>
         </div>
 
         <div class="mb-6">
-            <div class="flex gap-2 mb-2">
-                <button onclick="switchTab('link')" id="tab-link" class="tab-btn active flex-1 py-2 font-bold border-2 border-gray-800 rounded-t-xl transition-colors text-sm">
-                    <i class="fa-solid fa-link mr-1"></i> 新增連結
+            <div class="flex gap-1">
+                <button onclick="switchTab('link')" id="tab-link" class="tab-btn active px-5 py-2 rounded-t-xl text-xs font-bold">
+                    新增連結
                 </button>
-                <button onclick="switchTab('category')" id="tab-category" class="tab-btn flex-1 py-2 font-bold border-2 border-gray-800 rounded-t-xl transition-colors text-sm">
-                    <i class="fa-solid fa-folder-plus mr-1"></i> 新增分類
+                <button onclick="switchTab('category')" id="tab-category" class="tab-btn px-5 py-2 rounded-t-xl text-xs font-bold">
+                    新增分類
                 </button>
             </div>
 
-            <div class="bg-[#fffef0] p-4 border-2 border-gray-800 retro-shadow rounded-b-2xl rounded-tr-2xl relative z-10">
-                
+            <div class="bg-white p-4 border-2 border-[#d1c7b7] ghibli-shadow rounded-b-2xl rounded-tr-2xl">
                 <div id="panel-link" class="flex flex-col gap-3">
                     <div class="flex gap-2">
-                        <select id="newLinkCat" class="retro-input w-1/3 px-3 py-2 border-2 border-gray-800 bg-white text-gray-800 text-sm rounded-xl font-bold">
+                        <select id="newLinkCat" class="ghibli-input w-1/3 px-2 py-2 rounded-lg text-xs font-bold text-[#6b5e51]">
                             <option value="">未分類</option>
                         </select>
-                        <input type="text" id="newDesc" placeholder="輸入標題" 
-                            class="retro-input w-2/3 px-3 py-2 border-2 border-gray-800 bg-white text-gray-800 placeholder-gray-400 text-sm rounded-xl">
+                        <input type="text" id="newDesc" placeholder="輸入標題" class="ghibli-input w-2/3 px-3 py-2 text-xs rounded-lg">
                     </div>
-                    
-                    <input type="url" id="newUrl" placeholder="輸入網址 (https://...)" 
-                        class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-white text-gray-800 placeholder-gray-400 text-sm rounded-xl">
-                    
-                    <button onclick="addItem()" 
-                        class="w-full bg-orange-600 text-white py-2 border-2 border-gray-800 retro-shadow hover:bg-orange-500 hover:border-gray-800 transition-none font-bold tracking-widest mt-1 text-sm rounded-xl">
+                    <input type="url" id="newUrl" placeholder="輸入網址 (https://...)" class="ghibli-input w-full px-3 py-2 text-xs rounded-lg">
+                    <button onclick="addItem()" class="w-full bg-[#8fb4a2] text-white py-2.5 rounded-xl hover:bg-[#7da390] font-bold text-xs transition-colors">
                         新增連結 <i class="fa-solid fa-plus ml-1"></i>
                     </button>
                 </div>
 
                 <div id="panel-category" class="hidden flex flex-col gap-3">
-                    <input type="text" id="newCatName" placeholder="輸入新分類名稱 (例如: 工作、音樂...)" 
-                        class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-white text-gray-800 placeholder-gray-400 text-sm rounded-xl">
-                    
-                    <button onclick="addCategory()" 
-                        class="w-full bg-gray-800 text-white py-2 border-2 border-gray-800 retro-shadow hover:bg-gray-700 transition-none font-bold tracking-widest mt-1 text-sm rounded-xl">
+                    <input type="text" id="newCatName" placeholder="輸入新分類名稱" class="ghibli-input w-full px-3 py-2 text-xs rounded-lg">
+                    <button onclick="addCategory()" class="w-full bg-[#5c8a97] text-white py-2.5 rounded-xl hover:bg-[#4d7885] font-bold text-xs transition-colors">
                         建立分類 <i class="fa-solid fa-folder ml-1"></i>
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="mb-4">
-            <div class="flex overflow-x-auto gap-2 no-scrollbar pb-2 items-center" id="filter-bar"></div>
-            <div class="text-[10px] text-gray-400 text-center mt-1">
-                <i class="fa-solid fa-info-circle mr-1"></i>長按分類標籤可拖曳排序
-            </div>
+        <div class="mb-1">
+            <div class="flex overflow-x-auto gap-2 no-scrollbar px-1 py-1 items-center" id="filter-bar"></div>
         </div>
 
-        <!-- 簡化後的分類工具列 -->
-        <div id="cat-toolbar" class="hidden mb-4 flex items-center justify-between border-b-2 border-orange-200 pb-2 px-1">
+        <div id="cat-toolbar" class="hidden mb-3 flex items-center justify-between border-b border-[#d1c7b7] pb-2 px-1">
             <div class="flex items-center gap-2">
-                <span class="text-xs font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-lg">
+                <span class="text-xs font-bold bg-[#f0ede4] text-[#6b5e51] px-2 py-1 rounded-lg">
                     <i class="fa-solid fa-folder-open mr-1"></i>
                     <span id="current-cat-name-display">分類名稱</span>
                 </span>
-                <button onclick="openCatEditModal()" class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-all" title="管理此分類">
-                    <i class="fa-solid fa-gear text-sm"></i>
+                <button onclick="openCatEditModal()" class="text-[#b7ad9d] hover:text-[#5c8a97]">
+                    <i class="fa-solid fa-gear text-xs"></i>
                 </button>
             </div>
         </div>
 
-        <div class="mb-2 relative group">
-            <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400 z-10 group-focus-within:text-orange-600"></i>
+        <div class="relative mb-4">
+            <i class="fa-solid fa-search absolute left-3 top-2.5 text-[#b7ad9d] text-xs"></i>
             <input type="text" id="searchInput" placeholder="搜尋..." 
-                class="retro-input w-full pl-10 pr-4 py-2 border-2 border-gray-800 bg-white text-gray-800 placeholder-gray-400 text-sm rounded-xl font-bold">
+                class="ghibli-input w-full pl-9 pr-4 py-2 border-2 rounded-xl text-xs font-bold">
         </div>
 
-        <div id="loading" class="loading-spinner"></div>
-        
-        <div id="main-container" class="space-y-4 hidden pb-10"></div>
-
-        <p id="empty-msg" class="text-center text-gray-500 mt-8 hidden font-bold text-sm tracking-wide">
-            [ 無資料 ]
-        </p>
+        <div id="loading" class="loading-spinner mx-auto my-10"></div>
+        <div id="main-container" class="space-y-3 hidden pb-10"></div>
+        <p id="empty-msg" class="text-center text-[#b7ad9d] mt-10 hidden font-bold text-xs">[ 無資料 ]</p>
     </div>
 
-    <!-- 連結編輯彈窗 -->
-    <div id="editModal" class="fixed inset-0 bg-gray-900 bg-opacity-70 hidden flex items-center justify-center z-50 px-4 backdrop-blur-sm">
-        <div class="bg-[#fffef0] border-4 border-gray-800 p-6 w-full max-w-sm retro-shadow relative rounded-2xl">
-            <button onclick="closeEditModal()" class="absolute top-2 right-3 text-gray-800 hover:text-red-600 font-bold text-xl px-2">
+    <div id="editModal" class="fixed inset-0 bg-[#4a3f35]/50 hidden flex items-center justify-center z-50 px-4 backdrop-blur-sm">
+        <div class="bg-white p-6 w-full max-w-sm ghibli-shadow rounded-2xl relative">
+            <button onclick="closeEditModal()" class="absolute top-3 right-4 text-[#b7ad9d] hover:text-[#4a3f35] text-lg">
                 <i class="fa-solid fa-times"></i>
             </button>
-
-            <h3 class="text-lg font-black text-gray-800 mb-4 border-b-2 border-gray-200 pb-2 flex items-center gap-2">
+            <h3 class="text-sm font-bold text-[#4a3f35] mb-4 flex items-center gap-2 border-b pb-2">
                 <i class="fa-solid fa-pen-to-square"></i> 編輯連結
             </h3>
             <input type="hidden" id="editKey">
-            
-            <div class="flex flex-col gap-4">
+            <div class="space-y-3">
                 <div>
-                    <label class="block text-gray-600 text-xs font-bold mb-1">所屬分類</label>
-                    <select id="editCatId" class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-white rounded-xl text-sm font-bold"></select>
+                    <label class="block text-[#a89d8d] text-[10px] font-bold mb-1 ml-1">所屬分類</label>
+                    <select id="editCatId" class="ghibli-input w-full px-3 py-2 rounded-lg text-xs font-bold"></select>
                 </div>
                 <div>
-                    <label class="block text-gray-600 text-xs font-bold mb-1">標題描述</label>
-                    <input type="text" id="editDesc" class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-white rounded-xl text-sm">
+                    <label class="block text-[#a89d8d] text-[10px] font-bold mb-1 ml-1">標題描述</label>
+                    <input type="text" id="editDesc" class="ghibli-input w-full px-3 py-2 rounded-lg text-xs">
                 </div>
                 <div>
-                    <label class="block text-gray-600 text-xs font-bold mb-1">網址 URL</label>
-                    <input type="text" id="editUrl" class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-white rounded-xl text-sm font-mono text-xs">
+                    <label class="block text-[#a89d8d] text-[10px] font-bold mb-1 ml-1">網址 URL</label>
+                    <input type="text" id="editUrl" class="ghibli-input w-full px-3 py-2 rounded-lg text-[10px] font-mono">
                 </div>
             </div>
-            
-            <div class="flex justify-between items-center gap-3 pt-6">
-                <button onclick="deleteCurrentItem()" class="px-4 py-2 bg-red-50 text-red-600 border-2 border-red-200 hover:border-red-600 hover:bg-red-600 hover:text-white font-bold rounded-xl text-sm transition-all">
-                    刪除
-                </button>
-
-                <button onclick="saveEdit()" class="px-6 py-2 bg-gray-800 text-white border-2 border-gray-800 hover:bg-gray-700 hover:border-gray-700 font-bold rounded-xl text-sm shadow-md active:shadow-none active:translate-y-1">
-                    儲存更新
-                </button>
+            <div class="flex justify-between items-center mt-6 gap-3">
+                <button onclick="deleteCurrentItem()" class="px-4 py-2 text-red-400 font-bold text-xs hover:bg-red-50 rounded-lg">刪除</button>
+                <button onclick="saveEdit()" class="px-6 py-2 bg-[#8fb4a2] text-white font-bold rounded-xl text-xs">儲存更新</button>
             </div>
         </div>
     </div>
 
-    <!-- 分類編輯彈窗 -->
-    <div id="catEditModal" class="fixed inset-0 bg-gray-900 bg-opacity-70 hidden flex items-center justify-center z-50 px-4 backdrop-blur-sm">
-        <div class="bg-[#fffef0] border-4 border-gray-800 p-6 w-full max-w-sm retro-shadow relative rounded-2xl">
-            <button onclick="closeCatModal()" class="absolute top-2 right-3 text-gray-800 hover:text-red-600 font-bold text-xl px-2">
+    <div id="catEditModal" class="fixed inset-0 bg-[#4a3f35]/50 hidden flex items-center justify-center z-50 px-4 backdrop-blur-sm">
+        <div class="bg-white p-6 w-full max-w-sm ghibli-shadow rounded-2xl relative">
+            <button onclick="closeCatModal()" class="absolute top-3 right-4 text-[#b7ad9d] hover:text-[#4a3f35] text-lg">
                 <i class="fa-solid fa-times"></i>
             </button>
-
-            <h3 class="text-lg font-black text-gray-800 mb-4 border-b-2 border-gray-200 pb-2 flex items-center gap-2">
-                <i class="fa-solid fa-folder-open"></i> 編輯分類
+            <h3 class="text-sm font-bold text-[#4a3f35] mb-4 flex items-center gap-2 border-b pb-2">
+                <i class="fa-solid fa-folder"></i> 編輯分類
             </h3>
             <input type="hidden" id="editCatKey">
-            
-            <div class="flex flex-col gap-4">
-                <div>
-                    <label class="block text-gray-600 text-xs font-bold mb-1">分類名稱</label>
-                    <input type="text" id="editCatNameInput" class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-white rounded-xl text-sm font-bold">
-                </div>
-                <div class="bg-orange-50 p-3 rounded-lg border border-orange-200 text-xs text-orange-800">
-                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> 注意：如果刪除分類，該分類下的連結將會變成「未分類」。
-                </div>
-            </div>
-            
-            <div class="flex justify-between items-center gap-3 pt-6">
-                <button onclick="deleteCurrentCategory()" class="px-4 py-2 bg-red-50 text-red-600 border-2 border-red-200 hover:border-red-600 hover:bg-red-600 hover:text-white font-bold rounded-xl text-sm transition-all">
-                    刪除分類
-                </button>
-
-                <button onclick="saveCatEdit()" class="px-6 py-2 bg-gray-800 text-white border-2 border-gray-800 hover:bg-gray-700 font-bold rounded-xl text-sm shadow-md active:shadow-none active:translate-y-1">
-                    儲存
-                </button>
+            <input type="text" id="editCatNameInput" class="ghibli-input w-full px-3 py-2 rounded-lg text-xs font-bold">
+            <div class="flex justify-between items-center mt-6 gap-3">
+                <button onclick="deleteCurrentCategory()" class="px-4 py-2 text-red-400 font-bold text-xs hover:bg-red-50 rounded-lg">刪除分類</button>
+                <button onclick="saveCatEdit()" class="px-6 py-2 bg-[#5c8a97] text-white font-bold rounded-xl text-xs">儲存</button>
             </div>
         </div>
     </div>
@@ -312,21 +227,14 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         
-        let state = {
-            links: [],
-            categories: [],
-            currentFilter: 'all'
-        };
-        
+        let state = { links: [], categories: [], currentFilter: 'all' };
         let linkSortables = [];
         let catSortable = null;
 
-        // --- 工具：自動加上外部瀏覽器參數 ---
         function appendExternalBrowserParam(url) {
             if (!url) return url;
             const param = "openExternalBrowser=1";
             if (url.includes(param)) return url;
-            
             const separator = url.includes('?') ? '&' : '?';
             return `${url}${separator}${param}`;
         }
@@ -336,7 +244,6 @@
                 const data = snapshot.val();
                 state.links = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
                 state.links.sort((a, b) => (a.order || 0) - (b.order || 0));
-                
                 renderFilterBar();
                 checkAndRender();
             });
@@ -345,12 +252,6 @@
                 const data = snapshot.val();
                 state.categories = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
                 state.categories.sort((a, b) => (a.order || 0) - (b.order || 0));
-                
-                if (state.currentFilter !== 'all' && state.currentFilter !== 'uncategorized') {
-                    const exists = state.categories.find(c => c.id === state.currentFilter);
-                    if (!exists) state.currentFilter = 'all';
-                }
-
                 updateCategoryDropdowns();
                 renderFilterBar();
                 checkAndRender();
@@ -360,16 +261,9 @@
         function renderFilterBar() {
             const bar = document.getElementById('filter-bar');
             bar.innerHTML = '';
-            
-            if(catSortable) {
-                catSortable.destroy();
-                catSortable = null;
-            }
+            if(catSortable) { catSortable.destroy(); catSortable = null; }
 
-            const allBtn = createFilterChip('全部', 'all');
-            allBtn.classList.add('static-chip');
-            bar.appendChild(allBtn);
-
+            bar.appendChild(createFilterChip('全部', 'all'));
             state.categories.forEach(cat => {
                 const catBtn = createFilterChip(cat.name, cat.id);
                 catBtn.dataset.catId = cat.id;
@@ -377,35 +271,18 @@
             });
 
             const hasUncategorized = state.links.some(l => !l.categoryId || !state.categories.find(c => c.id === l.categoryId));
-            if (hasUncategorized) {
-                const uncatBtn = createFilterChip('未分類', 'uncategorized');
-                uncatBtn.classList.add('static-chip');
-                bar.appendChild(uncatBtn);
-            }
+            if (hasUncategorized) bar.appendChild(createFilterChip('未分類', 'uncategorized'));
 
             catSortable = Sortable.create(bar, {
-                animation: 150,
+                animation: 200,
                 filter: '.static-chip',
-                direction: 'horizontal',
-                ghostClass: 'sortable-ghost',
-                onMove: function (evt) {
-                    return !evt.related.classList.contains('static-chip');
-                },
-                onEnd: function (evt) {
-                    const items = Array.from(bar.children);
+                onEnd: function () {
                     const updates = {};
                     let orderIndex = 0;
-                    
-                    items.forEach((item) => {
-                        if (item.dataset.catId) {
-                            updates[`categories/${item.dataset.catId}/order`] = orderIndex;
-                            orderIndex++;
-                        }
+                    Array.from(bar.children).forEach((item) => {
+                        if (item.dataset.catId) updates[`categories/${item.dataset.catId}/order`] = orderIndex++;
                     });
-
-                    if(Object.keys(updates).length > 0) {
-                        update(ref(db), updates);
-                    }
+                    if(Object.keys(updates).length > 0) update(ref(db), updates);
                 }
             });
         }
@@ -413,347 +290,165 @@
         function createFilterChip(text, filterId) {
             const btn = document.createElement('button');
             const isActive = state.currentFilter === filterId;
-            btn.className = `filter-chip border-2 border-gray-800 px-4 py-1.5 rounded-full font-bold text-sm select-none ${isActive ? 'active shadow-none' : 'inactive retro-shadow hover:bg-gray-100'}`;
+            btn.className = `filter-chip px-3 py-1.5 rounded-full font-bold text-xs ${isActive ? 'active' : 'inactive shadow-sm'}`;
             btn.textContent = text;
+            if (filterId === 'all' || filterId === 'uncategorized') btn.classList.add('static-chip');
             btn.onclick = () => {
                 state.currentFilter = filterId;
                 renderFilterBar();
                 checkAndRender();
-                
-                const catSelect = document.getElementById('newLinkCat');
-                if (filterId === 'all' || filterId === 'uncategorized') {
-                    catSelect.value = "";
-                } else {
-                    catSelect.value = filterId;
-                }
+                document.getElementById('newLinkCat').value = (filterId === 'all' || filterId === 'uncategorized') ? "" : filterId;
             };
             return btn;
         }
 
         function checkAndRender() {
-            const loadingEl = document.getElementById('loading');
-            const container = document.getElementById('main-container');
-            const searchVal = document.getElementById('searchInput').value;
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('main-container').classList.remove('hidden');
             const catToolbar = document.getElementById('cat-toolbar');
-            
-            loadingEl.style.display = 'none';
-            container.classList.remove('hidden');
-
             if (state.currentFilter !== 'all' && state.currentFilter !== 'uncategorized') {
                 const currentCat = state.categories.find(c => c.id === state.currentFilter);
                 if (currentCat) {
                     catToolbar.classList.remove('hidden');
                     document.getElementById('current-cat-name-display').textContent = currentCat.name;
-                    document.getElementById('editCatKey').value = currentCat.id; 
-                } else {
-                    catToolbar.classList.add('hidden');
-                }
-            } else {
-                catToolbar.classList.add('hidden');
-            }
-            
-            renderMain(searchVal);
+                } else catToolbar.classList.add('hidden');
+            } else catToolbar.classList.add('hidden');
+            renderMain(document.getElementById('searchInput').value);
         }
 
         function renderMain(filterText = '') {
             const container = document.getElementById('main-container');
             container.innerHTML = '';
-            
             linkSortables.forEach(s => s.destroy());
             linkSortables = [];
-
-            const isSearching = filterText.length > 0;
             const term = filterText.toLowerCase();
             let hasData = false;
 
-            if (state.currentFilter === 'all') {
-                state.categories.forEach(cat => {
-                    const links = state.links.filter(l => l.categoryId === cat.id && matchFilter(l, term));
-                    if (links.length > 0) {
-                        renderCategoryBlock(container, cat, links, isSearching, false);
-                        hasData = true;
-                    }
-                });
-                
-                const uncatLinks = state.links.filter(l => (!l.categoryId || !state.categories.find(c => c.id === l.categoryId)) && matchFilter(l, term));
-                if (uncatLinks.length > 0) {
-                    renderCategoryBlock(container, { id: 'uncategorized', name: '未分類' }, uncatLinks, isSearching, true);
+            const renderBlock = (cat, links, isUncat) => {
+                if (links.length > 0) {
+                    renderCategoryBlock(container, cat, links, term.length > 0, isUncat);
                     hasData = true;
                 }
+            };
 
+            if (state.currentFilter === 'all') {
+                state.categories.forEach(cat => renderBlock(cat, state.links.filter(l => l.categoryId === cat.id && matchFilter(l, term)), false));
+                renderBlock({ id: 'uncategorized', name: '未分類' }, state.links.filter(l => (!l.categoryId || !state.categories.find(c => c.id === l.categoryId)) && matchFilter(l, term)), true);
             } else if (state.currentFilter === 'uncategorized') {
-                const links = state.links.filter(l => (!l.categoryId || !state.categories.find(c => c.id === l.categoryId)) && matchFilter(l, term));
-                if (links.length > 0 || !isSearching) {
-                    renderCategoryBlock(container, { id: 'uncategorized', name: '未分類' }, links, isSearching, true);
-                    hasData = true;
-                }
+                renderBlock({ id: 'uncategorized', name: '未分類' }, state.links.filter(l => (!l.categoryId || !state.categories.find(c => c.id === l.categoryId)) && matchFilter(l, term)), true);
             } else {
                 const cat = state.categories.find(c => c.id === state.currentFilter);
-                if (cat) {
-                    const links = state.links.filter(l => l.categoryId === cat.id && matchFilter(l, term));
-                    renderCategoryBlock(container, cat, links, isSearching, false);
-                    hasData = true;
-                }
+                if (cat) renderBlock(cat, state.links.filter(l => l.categoryId === cat.id && matchFilter(l, term)), false);
             }
-
-            const emptyMsg = document.getElementById('empty-msg');
-            if (!hasData) {
-                emptyMsg.classList.remove('hidden');
-                emptyMsg.textContent = isSearching ? "[ 找不到符合的結果 ]" : "[ 暫無資料 ]";
-            } else {
-                emptyMsg.classList.add('hidden');
-            }
+            document.getElementById('empty-msg').classList.toggle('hidden', hasData);
         }
 
-        function matchFilter(item, term) {
-            if (!term) return true;
-            return (item.desc && item.desc.toLowerCase().includes(term)) || 
-                   (item.url && item.url.toLowerCase().includes(term));
-        }
+        function matchFilter(item, term) { return !term || (item.desc && item.desc.toLowerCase().includes(term)) || (item.url && item.url.toLowerCase().includes(term)); }
 
-        function renderCategoryBlock(container, cat, links, isSearching, isUncategorized) {
-            const section = document.createElement('div');
-            section.className = `transition-all duration-300 ${isSearching ? 'drag-disabled' : ''}`;
-            section.dataset.catId = cat.id;
-
+        function renderCategoryBlock(container, cat, links, isSearching, isUncat) {
             const ul = document.createElement('ul');
-            ul.className = 'space-y-2 min-h-[10px]'; 
-            ul.dataset.catId = cat.id; 
+            ul.className = 'space-y-2 min-h-[10px]';
+            ul.dataset.catId = cat.id;
 
             links.forEach(link => {
                 const finalUrl = appendExternalBrowserParam(link.url);
-                
                 const li = document.createElement('li');
-                li.className = `bg-white p-2 border-2 border-gray-800 retro-shadow flex items-stretch gap-2 rounded-xl relative hover:translate-y-[-2px] transition-transform ${isSearching ? 'drag-disabled' : ''}`;
+                li.className = `bg-white p-3 ghibli-shadow rounded-xl flex items-center gap-2 group transition-all hover:bg-[#faf9f6]`;
                 li.dataset.id = link.id;
-                
-                let catTagHtml = '';
-                if (state.currentFilter === 'all' && !isUncategorized) {
-                    catTagHtml = `<span class="inline-block text-[10px] leading-none bg-gray-200 text-gray-500 px-1.5 py-1 rounded ml-2 align-middle font-bold">${escapeHtml(cat.name)}</span>`;
-                }
+                let tag = (state.currentFilter === 'all' && !isUncat) ? `<span class="text-[9px] bg-[#f0ede4] text-[#a89d8d] px-1.5 py-0.5 rounded ml-1 font-bold">${escapeHtml(cat.name)}</span>` : '';
 
                 li.innerHTML = `
-                    <div class="drag-handle p-1 pr-2 border-r-2 border-gray-100 flex items-center justify-center">
-                        <i class="fa-solid ${isSearching ? 'fa-ban text-gray-200' : 'fa-grip-vertical'}"></i>
+                    <div class="hidden-handle flex-shrink-0"></div>
+                    <div class="flex-grow min-w-0">
+                        <div class="flex items-center"><span class="font-bold text-[#4a3f35] truncate text-xs">${escapeHtml(link.desc)}</span>${tag}</div>
+                        <div class="text-[10px] text-[#5c8a97] truncate mt-0.5 font-mono"><a href="${finalUrl}" target="_blank">${escapeHtml(finalUrl)}</a></div>
                     </div>
-                    
-                    <div class="flex-grow min-w-0 flex flex-col justify-center py-1">
-                        <div class="flex items-center">
-                            <div class="font-bold text-gray-800 truncate text-sm leading-tight">${escapeHtml(link.desc)}</div>
-                            ${catTagHtml}
-                        </div>
-                        <div class="text-[10px] text-gray-400 truncate mt-0.5 font-mono">
-                            <a href="${finalUrl}" target="_blank" class="hover:text-orange-600 hover:underline decoration-2 underline-offset-2 transition-colors">
-                                ${escapeHtml(finalUrl)}
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-col gap-1 pl-1 justify-center border-l-2 border-gray-100">
-                        <button onclick="copyToClipboard(this, '${escapeHtml(link.desc)}', '${escapeHtml(finalUrl)}')" 
-                            class="w-7 h-7 flex items-center justify-center text-[10px] text-gray-400 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors" title="複製">
-                            <i class="fa-regular fa-copy"></i>
-                        </button>
-                        
-                        <button onclick="openEditModal('${link.id}', '${escapeHtml(link.desc)}', '${escapeHtml(link.url)}', '${link.categoryId || ''}')" 
-                            class="w-7 h-7 flex items-center justify-center text-[10px] text-gray-400 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors" title="編輯">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
+                    <div class="flex gap-1">
+                        <button onclick="copyToClipboard(this, '${escapeHtml(link.desc)}', '${escapeHtml(finalUrl)}')" class="w-7 h-7 flex items-center justify-center text-[#b7ad9d] hover:text-[#8fb4a2] transition-colors"><i class="fa-regular fa-copy text-xs"></i></button>
+                        <button onclick="openEditModal('${link.id}', '${escapeHtml(link.desc)}', '${escapeHtml(link.url)}', '${link.categoryId || ''}')" class="w-7 h-7 flex items-center justify-center text-[#b7ad9d] hover:text-[#5c8a97] transition-colors"><i class="fa-solid fa-pen text-xs"></i></button>
                     </div>
                 `;
                 ul.appendChild(li);
             });
-
-            section.appendChild(ul);
-            container.appendChild(section);
+            container.appendChild(ul);
 
             if (!isSearching) {
-                const sortable = Sortable.create(ul, {
+                linkSortables.push(Sortable.create(ul, {
                     group: 'shared-links',
-                    handle: '.drag-handle',
-                    animation: 150,
+                    handle: 'li',
+                    animation: 200,
                     ghostClass: 'sortable-ghost',
-                    onEnd: function (evt) {
-                        const itemEl = evt.item;
-                        const newCatId = evt.to.dataset.catId; 
-                        const linkId = itemEl.dataset.id;
-                        
-                        if (newCatId === undefined) return;
-
+                    onEnd: (evt) => {
                         const updates = {};
-                        const finalCatId = newCatId === 'uncategorized' ? null : newCatId;
-                        updates[`links/${linkId}/categoryId`] = finalCatId;
-                        
-                        const siblings = Array.from(evt.to.children);
-                        siblings.forEach((child, index) => {
-                            if (child.dataset.id) {
-                                updates[`links/${child.dataset.id}/order`] = index;
-                            }
-                        });
-
+                        const newCatId = evt.to.dataset.catId;
+                        updates[`links/${evt.item.dataset.id}/categoryId`] = newCatId === 'uncategorized' ? null : newCatId;
+                        Array.from(evt.to.children).forEach((child, idx) => { if (child.dataset.id) updates[`links/${child.dataset.id}/order`] = idx; });
                         update(ref(db), updates);
                     }
-                });
-                linkSortables.push(sortable);
+                }));
             }
         }
 
         function updateCategoryDropdowns() {
-            const createSelect = document.getElementById('newLinkCat');
-            const editSelect = document.getElementById('editCatId');
-            
-            let options = '<option value="">未分類</option>';
-            state.categories.forEach(cat => {
-                options += `<option value="${cat.id}">${escapeHtml(cat.name)}</option>`;
-            });
-
-            const currentCreateVal = createSelect.value;
-            createSelect.innerHTML = options;
-            
-            if (state.currentFilter !== 'all' && state.currentFilter !== 'uncategorized') {
-                createSelect.value = state.currentFilter;
-            } else {
-                createSelect.value = currentCreateVal || ""; 
-            }
-
-            editSelect.innerHTML = options;
+            let opts = '<option value="">未分類</option>';
+            state.categories.forEach(cat => opts += `<option value="${cat.id}">${escapeHtml(cat.name)}</option>`);
+            document.getElementById('newLinkCat').innerHTML = document.getElementById('editCatId').innerHTML = opts;
         }
 
         window.addItem = function() {
-            const descInput = document.getElementById('newDesc');
-            const urlInput = document.getElementById('newUrl');
-            const catSelect = document.getElementById('newLinkCat');
-            
-            const desc = descInput.value.trim();
-            let url = urlInput.value.trim();
-            const catId = catSelect.value;
-
+            const desc = document.getElementById('newDesc').value.trim();
+            let url = document.getElementById('newUrl').value.trim();
+            const catId = document.getElementById('newLinkCat').value;
             if (!desc || !url) return;
-
-            if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                url = 'https://' + url;
-            }
-
-            url = appendExternalBrowserParam(url);
-
-            const existingInCat = state.links.filter(l => l.categoryId === (catId || undefined));
-            const newOrder = existingInCat.length;
-
+            if (!url.startsWith('http')) url = 'https://' + url;
             const newRef = push(ref(db, 'links'));
-            set(newRef, {
-                desc: desc,
-                url: url,
-                categoryId: catId || null,
-                order: newOrder,
-                timestamp: Date.now()
-            }).then(() => {
-                descInput.value = '';
-                urlInput.value = '';
-            });
+            set(newRef, { desc, url: appendExternalBrowserParam(url), categoryId: catId || null, order: 999, timestamp: Date.now() })
+            .then(() => { document.getElementById('newDesc').value = document.getElementById('newUrl').value = ''; });
         };
 
         window.addCategory = function() {
-            const nameInput = document.getElementById('newCatName');
-            const name = nameInput.value.trim();
-            
+            const name = document.getElementById('newCatName').value.trim();
             if(!name) return;
-
-            const newOrder = state.categories.length;
             const newRef = push(ref(db, 'categories'));
-            set(newRef, {
-                name: name,
-                order: newOrder
-            }).then(() => {
-                nameInput.value = '';
-                window.switchTab('link'); 
-            });
+            set(newRef, { name, order: state.categories.length }).then(() => { document.getElementById('newCatName').value = ''; switchTab('link'); });
         };
 
-        window.deleteCurrentItem = function() {
+        window.deleteCurrentItem = () => confirm('確定要刪除嗎？') && remove(ref(db, 'links/' + document.getElementById('editKey').value)).then(closeEditModal);
+        window.saveEdit = () => {
             const key = document.getElementById('editKey').value;
-            if (confirm('確定要刪除這個連結嗎？')) {
-                remove(ref(db, 'links/' + key)).then(() => closeEditModal());
-            }
+            update(ref(db, 'links/' + key), { 
+                desc: document.getElementById('editDesc').value.trim(), 
+                url: appendExternalBrowserParam(document.getElementById('editUrl').value.trim()), 
+                categoryId: document.getElementById('editCatId').value || null 
+            }).then(closeEditModal);
         };
 
-        window.saveEdit = function() {
-            const key = document.getElementById('editKey').value;
-            const desc = document.getElementById('editDesc').value.trim();
-            let url = document.getElementById('editUrl').value.trim();
-            const catId = document.getElementById('editCatId').value;
-
-            if (!desc || !url) return;
-            url = appendExternalBrowserParam(url);
-
-            update(ref(db, 'links/' + key), {
-                desc: desc,
-                url: url,
-                categoryId: catId || null
-            }).then(() => closeEditModal());
-        };
-
-        window.openCatEditModal = function() {
-            const catId = state.currentFilter;
-            const cat = state.categories.find(c => c.id === catId);
+        window.openCatEditModal = () => {
+            const cat = state.categories.find(c => c.id === state.currentFilter);
             if (!cat) return;
-
             document.getElementById('editCatKey').value = cat.id;
             document.getElementById('editCatNameInput').value = cat.name;
             document.getElementById('catEditModal').classList.remove('hidden');
         };
 
-        window.deleteCurrentCategory = function() {
-            const key = document.getElementById('editCatKey').value;
-            if(!key) return;
-            
-            if (confirm('確定刪除此分類？\n注意：該分類下的所有連結將會變成「未分類」。')) {
-                const linksToUpdate = state.links.filter(l => l.categoryId === key);
+        window.deleteCurrentCategory = () => {
+            if (confirm('確定刪除分類？連結將變為未分類。')) {
                 const updates = {};
-                
-                linksToUpdate.forEach(l => {
-                    updates[`links/${l.id}/categoryId`] = null;
-                });
-                
-                updates[`categories/${key}`] = null;
-
-                update(ref(db), updates).then(() => {
-                    closeCatModal();
-                    state.currentFilter = 'all'; 
-                });
+                state.links.filter(l => l.categoryId === document.getElementById('editCatKey').value).forEach(l => updates[`links/${l.id}/categoryId`] = null);
+                updates[`categories/${document.getElementById('editCatKey').value}`] = null;
+                update(ref(db), updates).then(() => { closeCatModal(); state.currentFilter = 'all'; });
             }
         };
 
-        window.saveCatEdit = function() {
-            const key = document.getElementById('editCatKey').value;
-            const name = document.getElementById('editCatNameInput').value.trim();
-            
-            if(!name) return;
-
-            update(ref(db, 'categories/' + key), {
-                name: name
-            }).then(() => closeCatModal());
+        window.saveCatEdit = () => update(ref(db, 'categories/' + document.getElementById('editCatKey').value), { name: document.getElementById('editCatNameInput').value.trim() }).then(closeCatModal);
+        window.switchTab = (tab) => {
+            document.getElementById('panel-link').classList.toggle('hidden', tab !== 'link');
+            document.getElementById('panel-category').classList.toggle('hidden', tab !== 'category');
+            document.getElementById('tab-link').classList.toggle('active', tab === 'link');
+            document.getElementById('tab-category').classList.toggle('active', tab === 'category');
         };
 
-        window.switchTab = function(tab) {
-            const linkPanel = document.getElementById('panel-link');
-            const catPanel = document.getElementById('panel-category');
-            const linkBtn = document.getElementById('tab-link');
-            const catBtn = document.getElementById('tab-category');
-
-            if(tab === 'link') {
-                linkPanel.classList.remove('hidden');
-                catPanel.classList.add('hidden');
-                linkBtn.classList.add('active');
-                catBtn.classList.remove('active');
-            } else {
-                linkPanel.classList.add('hidden');
-                catPanel.classList.remove('hidden');
-                linkBtn.classList.remove('active');
-                catBtn.classList.add('active');
-            }
-        };
-
-        window.openEditModal = function(key, desc, url, catId) {
+        window.openEditModal = (key, desc, url, catId) => {
             document.getElementById('editKey').value = key;
             document.getElementById('editDesc').value = desc;
             document.getElementById('editUrl').value = url;
@@ -761,47 +456,17 @@
             document.getElementById('editModal').classList.remove('hidden');
         };
 
-        window.closeEditModal = function() {
-            document.getElementById('editModal').classList.add('hidden');
-        };
-
-        window.closeCatModal = function() {
-            document.getElementById('catEditModal').classList.add('hidden');
-        };
-
-        window.copyToClipboard = function(btnElement, desc, url) {
-            const textToCopy = `${desc} - ${url}`;
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                const originalIcon = btnElement.innerHTML;
-                btnElement.innerHTML = '<i class="fa-solid fa-check"></i>';
-                btnElement.classList.add('text-green-600', 'bg-green-100');
-                setTimeout(() => {
-                    btnElement.innerHTML = originalIcon;
-                    btnElement.classList.remove('text-green-600', 'bg-green-100');
-                }, 1000);
-            });
-        };
-
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            renderMain(e.target.value);
+        window.closeEditModal = () => document.getElementById('editModal').classList.add('hidden');
+        window.closeCatModal = () => document.getElementById('catEditModal').classList.add('hidden');
+        window.copyToClipboard = (btn, desc, url) => navigator.clipboard.writeText(`${desc} - ${url}`).then(() => {
+            const icon = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check text-[#8fb4a2]"></i>';
+            setTimeout(() => btn.innerHTML = icon, 1000);
         });
 
-        document.getElementById('newDesc').addEventListener('keydown', (e) => e.key === 'Enter' && window.addItem());
-        document.getElementById('newUrl').addEventListener('keydown', (e) => e.key === 'Enter' && window.addItem());
-        document.getElementById('newCatName').addEventListener('keydown', (e) => e.key === 'Enter' && window.addCategory());
-
-        function escapeHtml(text) {
-            if (!text) return text;
-            return text
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-        
+        document.getElementById('searchInput').addEventListener('input', (e) => renderMain(e.target.value));
+        function escapeHtml(t) { return t ? t.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#039;"}[m])) : t; }
         initDataListeners();
-
     </script>
 </body>
 </html>
