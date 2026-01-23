@@ -54,11 +54,10 @@
         }
 
         /* --- 連結列表 (垂直) 的拖曳定位線 --- */
-        /* 父層是 ul 時生效 */
         ul .sortable-ghost {
             opacity: 1 !important;
-            background-color: #ea580c !important; /* 橘色實心 */
-            height: 4px !important;              /* 橫向細線 */
+            background-color: #ea580c !important; 
+            height: 4px !important;              
             padding: 0 !important;
             margin: 6px 0 !important;            
             overflow: hidden !important;
@@ -70,12 +69,11 @@
         }
 
         /* --- 分類篩選列 (橫向) 的拖曳定位線 --- */
-        /* 父層是 #filter-bar 時生效 */
         #filter-bar .sortable-ghost {
             opacity: 1 !important;
-            background-color: #ea580c !important; /* 橘色實心 */
-            width: 4px !important;               /* 直向細線 */
-            height: 32px !important;             /* 配合按鈕高度 */
+            background-color: #ea580c !important; 
+            width: 4px !important;                
+            height: 32px !important;             
             padding: 0 !important;
             margin: 0 4px !important;            
             overflow: hidden !important;
@@ -84,7 +82,6 @@
             transform: none !important;
         }
 
-        /* 禁止拖曳的標籤 (全部、未分類) */
         .static-chip {
             cursor: default;
         }
@@ -103,7 +100,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* 隱藏橫向滾動條但保留功能 */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -112,7 +108,6 @@
             scrollbar-width: none;
         }
         
-        /* 篩選標籤樣式 */
         .filter-chip {
             white-space: nowrap;
             transition: all 0.2s;
@@ -129,7 +124,6 @@
             color: #374151;
         }
 
-        /* 頁籤切換樣式 */
         .tab-btn.active {
             background-color: #374151;
             color: #fffef0;
@@ -194,8 +188,7 @@
         </div>
 
         <div class="mb-4">
-            <div class="flex overflow-x-auto gap-2 no-scrollbar pb-2 items-center" id="filter-bar">
-                </div>
+            <div class="flex overflow-x-auto gap-2 no-scrollbar pb-2 items-center" id="filter-bar"></div>
             <div class="text-[10px] text-gray-400 text-center mt-1">
                 <i class="fa-solid fa-info-circle mr-1"></i>長按分類標籤可拖曳排序
             </div>
@@ -219,8 +212,7 @@
 
         <div id="loading" class="loading-spinner"></div>
         
-        <div id="main-container" class="space-y-4 hidden pb-10">
-            </div>
+        <div id="main-container" class="space-y-4 hidden pb-10"></div>
 
         <p id="empty-msg" class="text-center text-gray-500 mt-8 hidden font-bold text-sm tracking-wide">
             [ 無資料 ]
@@ -241,8 +233,7 @@
             <div class="flex flex-col gap-4">
                 <div>
                     <label class="block text-gray-600 text-xs font-bold mb-1">所屬分類</label>
-                    <select id="editCatId" class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-white rounded-xl text-sm font-bold">
-                        </select>
+                    <select id="editCatId" class="retro-input w-full px-3 py-2 border-2 border-gray-800 bg-white rounded-xl text-sm font-bold"></select>
                 </div>
                 <div>
                     <label class="block text-gray-600 text-xs font-bold mb-1">標題描述</label>
@@ -325,13 +316,22 @@
         let linkSortables = [];
         let catSortable = null;
 
+        // --- 工具：自動加上外部瀏覽器參數 ---
+        function appendExternalBrowserParam(url) {
+            if (!url) return url;
+            const param = "openExternalBrowser=1";
+            if (url.includes(param)) return url;
+            
+            const separator = url.includes('?') ? '&' : '?';
+            return `${url}${separator}${param}`;
+        }
+
         function initDataListeners() {
             onValue(ref(db, 'links'), (snapshot) => {
                 const data = snapshot.val();
                 state.links = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
                 state.links.sort((a, b) => (a.order || 0) - (b.order || 0));
                 
-                // 連結更新也要重新渲染 Bar (為了未分類的判斷)
                 renderFilterBar();
                 checkAndRender();
             });
@@ -352,62 +352,52 @@
             });
         }
 
-        // 渲染分類篩選列 (包含拖曳功能)
         function renderFilterBar() {
             const bar = document.getElementById('filter-bar');
             bar.innerHTML = '';
             
-            // 清除舊的 Sortable 實例
             if(catSortable) {
                 catSortable.destroy();
                 catSortable = null;
             }
 
-            // 1. 全部 (不可拖曳)
             const allBtn = createFilterChip('全部', 'all');
-            allBtn.classList.add('static-chip'); // 標記為不可拖曳
+            allBtn.classList.add('static-chip');
             bar.appendChild(allBtn);
 
-            // 2. 各個分類 (可拖曳)
             state.categories.forEach(cat => {
                 const catBtn = createFilterChip(cat.name, cat.id);
-                catBtn.dataset.catId = cat.id; // 綁定 ID 以便排序
+                catBtn.dataset.catId = cat.id;
                 bar.appendChild(catBtn);
             });
 
-            // 3. 未分類 (不可拖曳)
             const hasUncategorized = state.links.some(l => !l.categoryId || !state.categories.find(c => c.id === l.categoryId));
             if (hasUncategorized) {
                 const uncatBtn = createFilterChip('未分類', 'uncategorized');
-                uncatBtn.classList.add('static-chip'); // 標記為不可拖曳
+                uncatBtn.classList.add('static-chip');
                 bar.appendChild(uncatBtn);
             }
 
-            // 初始化分類的橫向拖曳
             catSortable = Sortable.create(bar, {
                 animation: 150,
-                filter: '.static-chip', // 忽略全部和未分類
-                direction: 'horizontal', // 指定橫向
-                ghostClass: 'sortable-ghost', // 會吃到 CSS 中的直向線條樣式
+                filter: '.static-chip',
+                direction: 'horizontal',
+                ghostClass: 'sortable-ghost',
                 onMove: function (evt) {
-                    // 禁止拖曳到 static-chip 的位置 (保持頭尾固定)
                     return !evt.related.classList.contains('static-chip');
                 },
                 onEnd: function (evt) {
-                    // 取得排序後的 ID 列表
                     const items = Array.from(bar.children);
                     const updates = {};
                     let orderIndex = 0;
                     
                     items.forEach((item) => {
-                        // 只處理有 dataset.catId 的項目 (排除全部和未分類)
                         if (item.dataset.catId) {
                             updates[`categories/${item.dataset.catId}/order`] = orderIndex;
                             orderIndex++;
                         }
                     });
 
-                    // 更新資料庫
                     if(Object.keys(updates).length > 0) {
                         update(ref(db), updates);
                     }
@@ -422,7 +412,7 @@
             btn.textContent = text;
             btn.onclick = () => {
                 state.currentFilter = filterId;
-                renderFilterBar(); // 重新渲染以更新 active 狀態
+                renderFilterBar();
                 checkAndRender();
                 
                 const catSelect = document.getElementById('newLinkCat');
@@ -469,7 +459,6 @@
 
             const isSearching = filterText.length > 0;
             const term = filterText.toLowerCase();
-
             let hasData = false;
 
             if (state.currentFilter === 'all') {
@@ -523,13 +512,14 @@
             section.dataset.catId = cat.id;
 
             const ul = document.createElement('ul');
-            // 高度：space-y-2 (緊湊)
             ul.className = 'space-y-2 min-h-[10px]'; 
             ul.dataset.catId = cat.id; 
 
             links.forEach(link => {
+                // 現有資料修正：確保渲染出的連結包含 openExternalBrowser=1
+                const finalUrl = appendExternalBrowserParam(link.url);
+                
                 const li = document.createElement('li');
-                // 高度：p-2 (緊湊)
                 li.className = `bg-white p-2 border-2 border-gray-800 retro-shadow flex items-stretch gap-2 rounded-xl relative hover:translate-y-[-2px] transition-transform ${isSearching ? 'drag-disabled' : ''}`;
                 li.dataset.id = link.id;
                 
@@ -549,14 +539,14 @@
                             ${catTagHtml}
                         </div>
                         <div class="text-[10px] text-gray-400 truncate mt-0.5 font-mono">
-                            <a href="${link.url}" target="_blank" class="hover:text-orange-600 hover:underline decoration-2 underline-offset-2 transition-colors">
-                                ${escapeHtml(link.url)}
+                            <a href="${finalUrl}" target="_blank" class="hover:text-orange-600 hover:underline decoration-2 underline-offset-2 transition-colors">
+                                ${escapeHtml(finalUrl)}
                             </a>
                         </div>
                     </div>
 
                     <div class="flex flex-col gap-1 pl-1 justify-center border-l-2 border-gray-100">
-                        <button onclick="copyToClipboard(this, '${escapeHtml(link.desc)}', '${escapeHtml(link.url)}')" 
+                        <button onclick="copyToClipboard(this, '${escapeHtml(link.desc)}', '${escapeHtml(finalUrl)}')" 
                             class="w-7 h-7 flex items-center justify-center text-[10px] text-gray-400 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors" title="複製">
                             <i class="fa-regular fa-copy"></i>
                         </button>
@@ -578,7 +568,7 @@
                     group: 'shared-links',
                     handle: '.drag-handle',
                     animation: 150,
-                    ghostClass: 'sortable-ghost', // 會吃到 CSS 中的橫向線條樣式
+                    ghostClass: 'sortable-ghost',
                     onEnd: function (evt) {
                         const itemEl = evt.item;
                         const newCatId = evt.to.dataset.catId; 
@@ -586,7 +576,6 @@
                         
                         if (newCatId === undefined) return;
 
-                        // 確保分類不遺失，使用落點的 catId
                         const updates = {};
                         const finalCatId = newCatId === 'uncategorized' ? null : newCatId;
                         updates[`links/${linkId}/categoryId`] = finalCatId;
@@ -644,6 +633,9 @@
                 url = 'https://' + url;
             }
 
+            // 新增時自動加上參數
+            url = appendExternalBrowserParam(url);
+
             const existingInCat = state.links.filter(l => l.categoryId === (catId || undefined));
             const newOrder = existingInCat.length;
 
@@ -687,10 +679,13 @@
         window.saveEdit = function() {
             const key = document.getElementById('editKey').value;
             const desc = document.getElementById('editDesc').value.trim();
-            const url = document.getElementById('editUrl').value.trim();
+            let url = document.getElementById('editUrl').value.trim();
             const catId = document.getElementById('editCatId').value;
 
             if (!desc || !url) return;
+
+            // 儲存更新時也確保有參數
+            url = appendExternalBrowserParam(url);
 
             update(ref(db, 'links/' + key), {
                 desc: desc,
