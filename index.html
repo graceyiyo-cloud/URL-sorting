@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的網址管理器 (Compact + Fix)</title>
+    <title>我的網址管理器 (Sortable Categories)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
@@ -53,19 +53,40 @@
             pointer-events: none;
         }
 
-        /* --- 拖曳時的「定位線」樣式 --- */
-        .sortable-ghost {
+        /* --- 連結列表 (垂直) 的拖曳定位線 --- */
+        /* 父層是 ul 時生效 */
+        ul .sortable-ghost {
             opacity: 1 !important;
             background-color: #ea580c !important; /* 橘色實心 */
-            height: 4px !important;              /* 壓扁成一條線 */
+            height: 4px !important;              /* 橫向細線 */
             padding: 0 !important;
-            margin: 6px 0 !important;            /* 上下給點空間 */
+            margin: 6px 0 !important;            
             overflow: hidden !important;
             border: none !important;
             box-shadow: none !important;
         }
-        .sortable-ghost * {
+        ul .sortable-ghost * {
             display: none !important;
+        }
+
+        /* --- 分類篩選列 (橫向) 的拖曳定位線 --- */
+        /* 父層是 #filter-bar 時生效 */
+        #filter-bar .sortable-ghost {
+            opacity: 1 !important;
+            background-color: #ea580c !important; /* 橘色實心 */
+            width: 4px !important;               /* 直向細線 */
+            height: 32px !important;             /* 配合按鈕高度 */
+            padding: 0 !important;
+            margin: 0 4px !important;            
+            overflow: hidden !important;
+            border: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+
+        /* 禁止拖曳的標籤 (全部、未分類) */
+        .static-chip {
+            cursor: default;
         }
 
         .loading-spinner {
@@ -173,10 +194,10 @@
         </div>
 
         <div class="mb-4">
-            <div class="flex overflow-x-auto gap-2 no-scrollbar pb-2" id="filter-bar">
-                <button class="filter-chip active border-2 border-gray-800 px-4 py-1.5 rounded-full font-bold text-sm shadow-[2px_2px_0px_0px_rgba(55,65,81,1)]">
-                    全部
-                </button>
+            <div class="flex overflow-x-auto gap-2 no-scrollbar pb-2 items-center" id="filter-bar">
+                </div>
+            <div class="text-[10px] text-gray-400 text-center mt-1">
+                <i class="fa-solid fa-info-circle mr-1"></i>長按分類標籤可拖曳排序
             </div>
         </div>
 
@@ -301,13 +322,16 @@
             currentFilter: 'all'
         };
         
-        let sortables = [];
+        let linkSortables = [];
+        let catSortable = null;
 
         function initDataListeners() {
             onValue(ref(db, 'links'), (snapshot) => {
                 const data = snapshot.val();
                 state.links = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
                 state.links.sort((a, b) => (a.order || 0) - (b.order || 0));
+                
+                // 連結更新也要重新渲染 Bar (為了未分類的判斷)
                 renderFilterBar();
                 checkAndRender();
             });
@@ -328,23 +352,67 @@
             });
         }
 
+        // 渲染分類篩選列 (包含拖曳功能)
         function renderFilterBar() {
             const bar = document.getElementById('filter-bar');
             bar.innerHTML = '';
+            
+            // 清除舊的 Sortable 實例
+            if(catSortable) {
+                catSortable.destroy();
+                catSortable = null;
+            }
 
+            // 1. 全部 (不可拖曳)
             const allBtn = createFilterChip('全部', 'all');
+            allBtn.classList.add('static-chip'); // 標記為不可拖曳
             bar.appendChild(allBtn);
 
+            // 2. 各個分類 (可拖曳)
             state.categories.forEach(cat => {
                 const catBtn = createFilterChip(cat.name, cat.id);
+                catBtn.dataset.catId = cat.id; // 綁定 ID 以便排序
                 bar.appendChild(catBtn);
             });
 
+            // 3. 未分類 (不可拖曳)
             const hasUncategorized = state.links.some(l => !l.categoryId || !state.categories.find(c => c.id === l.categoryId));
             if (hasUncategorized) {
                 const uncatBtn = createFilterChip('未分類', 'uncategorized');
+                uncatBtn.classList.add('static-chip'); // 標記為不可拖曳
                 bar.appendChild(uncatBtn);
             }
+
+            // 初始化分類的橫向拖曳
+            catSortable = Sortable.create(bar, {
+                animation: 150,
+                filter: '.static-chip', // 忽略全部和未分類
+                direction: 'horizontal', // 指定橫向
+                ghostClass: 'sortable-ghost', // 會吃到 CSS 中的直向線條樣式
+                onMove: function (evt) {
+                    // 禁止拖曳到 static-chip 的位置 (保持頭尾固定)
+                    return !evt.related.classList.contains('static-chip');
+                },
+                onEnd: function (evt) {
+                    // 取得排序後的 ID 列表
+                    const items = Array.from(bar.children);
+                    const updates = {};
+                    let orderIndex = 0;
+                    
+                    items.forEach((item) => {
+                        // 只處理有 dataset.catId 的項目 (排除全部和未分類)
+                        if (item.dataset.catId) {
+                            updates[`categories/${item.dataset.catId}/order`] = orderIndex;
+                            orderIndex++;
+                        }
+                    });
+
+                    // 更新資料庫
+                    if(Object.keys(updates).length > 0) {
+                        update(ref(db), updates);
+                    }
+                }
+            });
         }
 
         function createFilterChip(text, filterId) {
@@ -354,7 +422,7 @@
             btn.textContent = text;
             btn.onclick = () => {
                 state.currentFilter = filterId;
-                renderFilterBar();
+                renderFilterBar(); // 重新渲染以更新 active 狀態
                 checkAndRender();
                 
                 const catSelect = document.getElementById('newLinkCat');
@@ -396,8 +464,8 @@
             const container = document.getElementById('main-container');
             container.innerHTML = '';
             
-            sortables.forEach(s => s.destroy());
-            sortables = [];
+            linkSortables.forEach(s => s.destroy());
+            linkSortables = [];
 
             const isSearching = filterText.length > 0;
             const term = filterText.toLowerCase();
@@ -510,7 +578,7 @@
                     group: 'shared-links',
                     handle: '.drag-handle',
                     animation: 150,
-                    ghostClass: 'sortable-ghost', // 使用自定義的線條樣式
+                    ghostClass: 'sortable-ghost', // 會吃到 CSS 中的橫向線條樣式
                     onEnd: function (evt) {
                         const itemEl = evt.item;
                         const newCatId = evt.to.dataset.catId; 
@@ -518,14 +586,14 @@
                         
                         if (newCatId === undefined) return;
 
-                        // 核心修正：強制使用落點區塊的 ID，確保分類不會消失
+                        // 確保分類不遺失，使用落點的 catId
                         const updates = {};
                         const finalCatId = newCatId === 'uncategorized' ? null : newCatId;
                         updates[`links/${linkId}/categoryId`] = finalCatId;
                         
                         const siblings = Array.from(evt.to.children);
                         siblings.forEach((child, index) => {
-                            if (child.dataset.id) { // 確保不是 ghost 元素
+                            if (child.dataset.id) {
                                 updates[`links/${child.dataset.id}/order`] = index;
                             }
                         });
@@ -533,7 +601,7 @@
                         update(ref(db), updates);
                     }
                 });
-                sortables.push(sortable);
+                linkSortables.push(sortable);
             }
         }
 
