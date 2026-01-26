@@ -85,7 +85,7 @@
             color: #5c8a97;
             margin-top: 2px;
             word-break: break-all; /* 強制換行以完整顯示網址 */
-            white-space: normal;   /* 覆蓋可能繼承的 nowrap */
+            white-space: normal;   
         }
 
         .item-tag {
@@ -331,9 +331,9 @@
                                     <a href="${link.url}" target="_blank" class="hover:underline">${link.url}</a>
                                 </div>
                             </div>
-                            <div class="flex gap-2 flex-shrink-0">
-                                <button onclick="copyToClipboard(this, '${link.desc}', '${link.url}')" class="text-[#b7ad9d] hover:text-[#8fb4a2] p-2"><i class="fa-regular fa-copy"></i></button>
-                                <button onclick="openEditModal('${link.id}', '${link.desc}', '${link.url}', '${link.categoryId || ''}')" class="text-[#b7ad9d] hover:text-[#5c8a97] p-2"><i class="fa-solid fa-pen"></i></button>
+                            <div class="flex flex-col gap-1 flex-shrink-0 border-l-2 border-[#f0ede4] pl-2">
+                                <button onclick="copyToClipboard(this, '${link.desc}', '${link.url}')" class="text-[#b7ad9d] hover:text-[#8fb4a2] p-1.5"><i class="fa-regular fa-copy"></i></button>
+                                <button onclick="openEditModal('${link.id}', '${link.desc}', '${link.url}', '${link.categoryId || ''}')" class="text-[#b7ad9d] hover:text-[#5c8a97] p-1.5"><i class="fa-solid fa-pen"></i></button>
                             </div>
                         `;
                         ul.appendChild(li);
