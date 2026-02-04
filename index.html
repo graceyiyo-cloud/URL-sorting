@@ -81,6 +81,27 @@
         .loading-spinner { border: 4px solid #e8e2d5; border-top: 4px solid #8fb4a2; border-radius: 50%; width: 30px; height: 30px; animation: spin 1.5s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         #login-overlay { background-color: #f7f3e9; background-image: radial-gradient(#e0d7c1 1px, transparent 1px); background-size: 24px 24px; }
+
+        /* 拖曳相關樣式修正 */
+        .sortable-item {
+            cursor: grab; /* 讓使用者知道可以抓取 */
+            touch-action: none; /* 解決行動端拖曳衝突 */
+        }
+        .sortable-item:active {
+            cursor: grabbing;
+        }
+        .sortable-placeholder {
+            background-color: rgba(143, 180, 162, 0.1) !important;
+            border: 2px dashed #8fb4a2 !important;
+            border-radius: 16px;
+            height: 70px;
+            margin: 8px 0;
+            visibility: visible !important;
+        }
+        .sortable-ghost {
+            opacity: 0.3;
+            background: #e8e2d5 !important;
+        }
     </style>
 </head>
 <body class="pb-20 min-h-screen flex flex-col items-center">
@@ -309,14 +330,21 @@
         }
 
         function renderMain(filterText = '') {
-            const container = document.getElementById('main-container'); container.innerHTML = '';
+            const container = document.getElementById('main-container'); 
+            container.innerHTML = '';
+            
+            linkSortables.forEach(s => s.destroy());
+            linkSortables = [];
+
             const term = filterText.toLowerCase(); let hasData = false;
             const renderBlock = (cat, links, isUncat) => {
                 if (links.length > 0) {
-                    const ul = document.createElement('ul'); ul.className = 'space-y-3';
+                    const ul = document.createElement('ul'); 
+                    ul.className = 'space-y-3 min-h-[10px] pb-4'; // 增加底部間距方便拖放
                     links.forEach(link => {
                         const li = document.createElement('li');
-                        li.className = `bg-white p-4 ghibli-shadow rounded-2xl flex items-center gap-3 transition-all hover:bg-[#faf9f6]`;
+                        li.dataset.id = link.id;
+                        li.className = `bg-white p-4 ghibli-shadow rounded-2xl flex items-center gap-3 transition-all hover:bg-[#faf9f6] sortable-item`;
                         
                         const catColor = isUncat ? '#9b8b7a' : getCatColor(cat.id);
                         const tag = (state.currentFilter === 'all' || state.currentFilter === 'uncategorized') 
@@ -325,12 +353,31 @@
 
                         const displayDesc = link.desc && link.desc.trim() !== "" ? link.desc : "[ 無標題 ]";
 
-                        li.innerHTML = `<div class="flex-grow min-w-0"><div class="flex items-center"><span class="item-title truncate">${displayDesc}</span>${tag}</div><div class="item-url font-mono"><a href="${link.url}" target="_blank" class="hover:underline">${link.url}</a></div></div><div class="flex flex-col gap-1 flex-shrink-0 border-l-2 border-[#f0ede4] pl-2"><button onclick="copyToClipboard(this, '${link.desc || ''}', '${link.url}')" class="text-[#b7ad9d] hover:text-[#8fb4a2] p-1.5"><i class="fa-regular fa-copy"></i></button><button onclick="openEditModal('${link.id}', '${link.desc || ''}', '${link.url}', '${link.categoryId || ''}')" class="text-[#b7ad9d] hover:text-[#5c8a97] p-1.5"><i class="fa-solid fa-pen"></i></button></div>`;
+                        li.innerHTML = `<div class="flex-grow min-w-0 pointer-events-none select-none"><div class="flex items-center"><span class="item-title truncate">${displayDesc}</span>${tag}</div><div class="item-url font-mono"><a href="${link.url}" target="_blank" class="hover:underline pointer-events-auto">${link.url}</a></div></div><div class="flex flex-col gap-1 flex-shrink-0 border-l-2 border-[#f0ede4] pl-2 pointer-events-auto"><button onclick="copyToClipboard(this, '${link.desc || ''}', '${link.url}')" class="text-[#b7ad9d] hover:text-[#8fb4a2] p-1.5"><i class="fa-regular fa-copy"></i></button><button onclick="openEditModal('${link.id}', '${link.desc || ''}', '${link.url}', '${link.categoryId || ''}')" class="text-[#b7ad9d] hover:text-[#5c8a97] p-1.5"><i class="fa-solid fa-pen"></i></button></div>`;
                         ul.appendChild(li);
                     });
-                    container.appendChild(ul); hasData = true;
+                    container.appendChild(ul); 
+                    hasData = true;
+
+                    const s = Sortable.create(ul, {
+                        animation: 250,
+                        ghostClass: "sortable-ghost",
+                        chosenClass: "sortable-chosen",
+                        dragClass: "sortable-drag",
+                        placeholderClass: "sortable-placeholder",
+                        forceFallback: false, // 改回 false 以獲得更流暢的滑鼠體驗
+                        onEnd: () => {
+                            const updates = {};
+                            Array.from(ul.children).forEach((el, idx) => {
+                                if(el.dataset.id) updates[`users/${state.userId}/links/${el.dataset.id}/order`] = idx;
+                            });
+                            update(ref(db), updates);
+                        }
+                    });
+                    linkSortables.push(s);
                 }
             };
+
             if (state.currentFilter === 'all') {
                 state.categories.forEach(cat => renderBlock(cat, state.links.filter(l => l.categoryId === cat.id && matchFilter(l, term)), false));
                 renderBlock({id:'uncategorized', name:'未分類'}, state.links.filter(l => (!l.categoryId || !state.categories.find(c => c.id === l.categoryId)) && matchFilter(l, term)), true);
