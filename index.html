@@ -2,205 +2,322 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="theme-color" content="#f7f3e9">
     <title>URL_Manager</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js" defer></script>
 
     <style>
+        :root {
+            --bg: #f7f3e9;
+            --dot: #e0d7c1;
+            --ink: #4a3f35;
+            --ink-soft: #6b5e51;
+            --muted: #a3978a;
+            --line: #d1c7b7;
+            --line-soft: #f0ede4;
+            --sage: #8fb4a2;
+            --sage-deep: #7da390;
+            --teal: #5c8a97;
+            --teal-deep: #4d7885;
+            --danger: #d98880;
+            --safe-b: env(safe-area-inset-bottom, 0px);
+            --safe-t: env(safe-area-inset-top, 0px);
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        html { -webkit-text-size-adjust: 100%; }
         body {
-            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #f7f3e9; 
-            background-image: radial-gradient(#e0d7c1 1px, transparent 1px);
+            margin: 0;
+            min-height: 100vh;
+            font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg);
+            background-image: radial-gradient(var(--dot) 1px, transparent 1px);
             background-size: 24px 24px;
-            color: #4a3f35;
+            color: var(--ink);
+            line-height: 1.5;
             -webkit-tap-highlight-color: transparent;
         }
-        .ghibli-shadow {
-            box-shadow: 0 4px 10px -2px rgba(74, 63, 53, 0.08);
-            border: 2px solid #d1c7b7;
+        button, input, select { font: inherit; color: inherit; margin: 0; }
+        button { background: none; border: 0; padding: 0; cursor: pointer; }
+        ul { list-style: none; margin: 0; padding: 0; }
+        a { color: inherit; text-decoration: none; }
+        h1, h2, h3, p { margin: 0; }
+        [hidden] { display: none !important; }
+        svg.ic { width: 1.15em; height: 1.15em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; display: block; }
+        :focus-visible { outline: 2px solid var(--sage); outline-offset: 2px; }
+
+        .soft-card { background: #fff; border: 2px solid var(--line); box-shadow: 0 4px 10px -2px rgba(74, 63, 53, 0.08); }
+        .field {
+            width: 100%; min-height: 46px; padding: 10px 14px;
+            font-size: 16px; border-radius: 12px;
+            background: rgba(255, 255, 255, 0.9); border: 2px solid var(--line);
+            transition: border-color .2s, box-shadow .2s;
         }
-        
-        #filter-bar-container {
-            width: 100%;
-            overflow-x: auto;
-            overflow-y: hidden;
-            -webkit-overflow-scrolling: touch;
-            padding: 8px 0; 
-            cursor: default;
+        .field:focus { outline: none; border-color: var(--sage); box-shadow: 0 0 0 3px rgba(143, 180, 162, 0.15); }
+        .field::placeholder { color: #b7ad9d; }
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            min-height: 46px; padding: 0 22px; border-radius: 12px;
+            font-size: 15px; font-weight: 700; color: #fff; background: var(--sage);
+            transition: background-color .15s;
         }
+        .btn:hover { background: var(--sage-deep); }
+        .btn.teal { background: var(--teal); }
+        .btn.teal:hover { background: var(--teal-deep); }
+        .btn.block { width: 100%; }
+        .btn.ghost-danger { background: none; color: var(--danger); padding: 0 12px; }
+        .icon-btn {
+            width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--muted); font-size: 17px; transition: color .15s, background-color .15s;
+        }
+        .icon-btn:hover { color: var(--ink); background: var(--line-soft); }
+
+        /* 登入 */
+        #login-overlay {
+            position: fixed; inset: 0; z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px;
+            background-color: var(--bg);
+            background-image: radial-gradient(var(--dot) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .login-box { width: 100%; max-width: 20rem; text-align: center; }
+        .login-title { font-size: 30px; font-weight: 900; letter-spacing: -0.025em; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .login-title svg { color: var(--sage); }
+        .login-sub { font-size: 14px; font-weight: 900; color: var(--sage); letter-spacing: 0.2em; margin-top: 4px; opacity: .8; }
+        .login-card { margin-top: 32px; padding: 24px; border-radius: 16px; display: flex; flex-direction: column; gap: 16px; }
+        .login-card .field { text-align: center; font-weight: 700; }
+        #login-history { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-height: 9rem; overflow-y: auto; }
+        #login-history:empty { display: none; }
+        .history-chip { display: flex; align-items: center; background: var(--line-soft); border: 1px solid var(--line); border-radius: 999px; }
+        .history-chip button { min-height: 36px; font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+        .history-chip .h-id { padding: 0 6px 0 14px; }
+        .history-chip .h-del { padding: 0 10px 0 8px; color: var(--danger); border-left: 1px solid var(--line); }
+        .hint { font-size: 12px; color: var(--muted); font-weight: 700; margin-top: 16px; }
+        .error { font-size: 13px; color: var(--danger); font-weight: 700; }
+
+        /* 主畫面 */
+        #app-content { width: 100%; max-width: 32rem; margin: 0 auto; padding: calc(24px + var(--safe-t)) 16px calc(110px + var(--safe-b)); }
+        .app-title { font-size: 24px; font-weight: 900; letter-spacing: -0.025em; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .app-title svg { color: var(--sage); }
+        .rule { border-bottom: 2px solid var(--line); margin: 6px 0 4px; }
+        .user-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 0 4px; }
+        .user-id { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 900; min-width: 0; }
+        .user-id svg { color: var(--sage); }
+        .user-id span { word-break: break-all; }
+        .switch-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 6px; font-size: 12px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+        .switch-btn:hover { color: var(--danger); }
+
+        .sticky-bar {
+            position: sticky; top: 0; z-index: 20;
+            margin: 8px -16px 12px; padding: calc(8px + var(--safe-t)) 16px 4px;
+            background: rgba(247, 243, 233, 0.92);
+            -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+        }
+        .search-wrap { position: relative; }
+        .search-wrap > svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #b7ad9d; pointer-events: none; }
+        .search-wrap .field { padding-left: 42px; padding-right: 46px; font-weight: 700; }
+        #searchClear { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); }
+
+        #filter-bar-container { width: 100%; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; padding: 10px 0 8px; scrollbar-width: thin; }
         #filter-bar-container::-webkit-scrollbar { height: 4px; }
-        #filter-bar-container::-webkit-scrollbar-thumb { background: #d1c7b7; border-radius: 10px; }
-        #filter-bar { display: flex; flex-wrap: nowrap; gap: 12px; padding: 0 4px; min-width: max-content; }
-        
+        #filter-bar-container::-webkit-scrollbar-thumb { background: var(--line); border-radius: 10px; }
+        #filter-bar { display: flex; flex-wrap: nowrap; gap: 10px; padding: 2px 4px; min-width: max-content; align-items: center; }
         .filter-chip {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
-            white-space: nowrap; 
-            flex-shrink: 0; 
-            font-size: 0.85rem; 
-            font-weight: 900; 
-            border-width: 2.5px; 
-            border-style: solid;
-            cursor: pointer; 
-            user-select: none; 
-            padding: 6px 20px; 
-            border-radius: 9999px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap; flex-shrink: 0;
+            font-size: 14px; font-weight: 900;
+            border: 2.5px solid; min-height: 40px; padding: 0 18px; border-radius: 9999px;
+            background-color: rgba(255, 255, 255, 0.6);
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            user-select: none; -webkit-user-select: none;
         }
-        
-        .filter-chip:not(.active) {
-            background-color: rgba(255, 255, 255, 0.5) !important;
-        }
+        .filter-chip.active { color: #fff !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transform: translateY(-1.5px); }
+        .chip-manage { border: 2px dashed var(--line); border-radius: 999px; width: 40px; height: 40px; background: rgba(255,255,255,.5); }
 
-        .filter-chip.active { 
-            color: #ffffff !important; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            transform: translateY(-1.5px);
+        .group { margin-bottom: 8px; }
+        .group-head {
+            width: 100%; min-height: 40px; display: flex; align-items: center; gap: 8px;
+            padding: 0 6px; font-size: 14px; font-weight: 900; color: var(--ink-soft); text-align: left;
         }
-        
-        .item-title { font-size: 1.05rem; font-weight: 800; color: #4a3f35; }
-        .item-url { font-size: 0.75rem; color: #5c8a97; margin-top: 2px; word-break: break-all; white-space: normal; }
-        
-        .item-tag {
-            border-width: 1.5px; border-style: solid;
-            padding: 1px 7px; border-radius: 6px; 
-            font-size: 0.6rem; 
-            font-weight: 900; 
-            margin-left: 8px; vertical-align: middle;
-            letter-spacing: 0.05em;
-            display: inline-block;
-            line-height: 1.2;
-            text-transform: uppercase;
-        }
-        
-        .ghibli-input { background-color: rgba(255, 255, 255, 0.9); border: 2px solid #d1c7b7; transition: all 0.3s; }
-        .ghibli-input:focus { outline: none; border-color: #8fb4a2; box-shadow: 0 0 0 3px rgba(143, 180, 162, 0.15); }
-        .tab-btn { background-color: #e8e2d5; color: #6b5e51; border: 2px solid #d1c7b7; border-bottom: none; font-size: 0.8rem; }
-        .tab-btn.active { background-color: #fff; color: #4a3f35; font-weight: bold; }
-        .loading-spinner { border: 4px solid #e8e2d5; border-top: 4px solid #8fb4a2; border-radius: 50%; width: 30px; height: 30px; animation: spin 1.5s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #login-overlay { background-color: #f7f3e9; background-image: radial-gradient(#e0d7c1 1px, transparent 1px); background-size: 24px 24px; }
+        .group-head .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .group-head .g-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .group-head .g-count { font-size: 12px; color: var(--muted); font-weight: 700; }
+        .group-head .chev { margin-left: auto; color: var(--muted); transition: transform .2s; }
+        .group-head[aria-expanded="false"] .chev { transform: rotate(-90deg); }
+        .link-list { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 12px; }
 
-        /* 拖曳相關樣式修正 */
-        .drag-handle {
-            cursor: grab; 
-            touch-action: none;
+        .link-card { display: flex; align-items: stretch; border-radius: 16px; overflow: hidden; transition: background-color .15s; }
+        .link-card:hover { background: #faf9f6; }
+        .handle { width: 30px; display: flex; align-items: center; justify-content: center; color: #cfc6b8; cursor: grab; touch-action: none; flex-shrink: 0; }
+        .handle:active { cursor: grabbing; }
+        .card-main { flex: 1; min-width: 0; padding: 14px 8px 14px 16px; display: flex; flex-direction: column; justify-content: center; text-align: left; }
+        .handle + .card-main { padding-left: 4px; }
+        .item-title { font-size: 16.5px; font-weight: 800; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .item-url { font-size: 12px; color: var(--teal); margin-top: 2px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .card-actions { display: flex; align-items: center; border-left: 2px solid var(--line-soft); padding: 0 4px; flex-shrink: 0; }
+        .sortable-ghost { opacity: 0.35; background: #e8e2d5 !important; }
+        .sortable-fallback { box-shadow: 0 10px 24px -6px rgba(74,63,53,.25) !important; }
+
+        #empty-msg { text-align: center; color: var(--muted); margin-top: 40px; font-weight: 700; font-size: 14px; }
+        .loading-spinner { border: 4px solid #e8e2d5; border-top: 4px solid var(--sage); border-radius: 50%; width: 30px; height: 30px; animation: spin 1.5s linear infinite; margin: 40px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #fab {
+            position: fixed; z-index: 30;
+            right: max(20px, calc(50vw - 16rem - 76px)); bottom: calc(22px + var(--safe-b));
+            width: 58px; height: 58px; border-radius: 50%;
+            background: var(--sage); color: #fff; font-size: 24px;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid #fff; box-shadow: 0 6px 16px -4px rgba(74, 63, 53, 0.35);
+            transition: background-color .15s, transform .15s;
         }
-        .drag-handle:active {
-            cursor: grabbing;
+        #fab:hover { background: var(--sage-deep); }
+        #fab:active { transform: scale(.95); }
+
+        /* Sheet / Modal */
+        .overlay {
+            position: fixed; inset: 0; z-index: 50;
+            display: flex; align-items: flex-end; justify-content: center;
+            background: rgba(74, 63, 53, 0.5);
+            -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
         }
-        .sortable-placeholder {
-            background-color: rgba(143, 180, 162, 0.1) !important;
-            border: 2px dashed #8fb4a2 !important;
-            border-radius: 16px;
-            height: 70px;
-            margin: 8px 0;
-            visibility: visible !important;
+        .sheet {
+            width: 100%; max-width: 30rem; max-height: 92vh; overflow-y: auto;
+            background: #fff; border: 2px solid var(--line); border-bottom: 0;
+            border-radius: 22px 22px 0 0;
+            padding: 18px 20px calc(20px + var(--safe-b));
+            animation: rise .22s ease-out;
         }
-        .sortable-ghost {
-            opacity: 0.3;
-            background: #e8e2d5 !important;
+        @keyframes rise { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+        @media (min-width: 640px) {
+            .overlay { align-items: center; padding: 16px; }
+            .sheet { border-bottom: 2px solid var(--line); border-radius: 22px; padding-bottom: 20px; }
         }
+        @media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }
+        .sheet-head { display: flex; align-items: center; justify-content: space-between; margin: -6px -8px 10px 0; }
+        .sheet-head h2 { font-size: 16px; font-weight: 800; }
+        .sheet form { display: flex; flex-direction: column; gap: 12px; }
+        .sheet-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 8px; }
+        select.field { font-weight: 700; color: var(--ink-soft); }
+        #editUrl, #newUrl { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+        #cat-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+        #cat-list:empty { display: none; }
+        .cat-row { display: flex; align-items: center; gap: 8px; }
+        .cat-row .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+        .cat-row .icon-btn:hover { color: var(--danger); }
+        .cat-add { display: flex; gap: 8px; flex-direction: row !important; }
+        .cat-add .btn { padding: 0 16px; flex-shrink: 0; }
+
+        #toast {
+            position: fixed; left: 50%; bottom: calc(96px + var(--safe-b)); z-index: 200;
+            transform: translate(-50%, 12px); opacity: 0; pointer-events: none;
+            background: var(--ink); color: #fff; font-size: 14px; font-weight: 700;
+            padding: 10px 20px; border-radius: 999px; white-space: nowrap;
+            transition: opacity .2s, transform .2s;
+        }
+        #toast.show { opacity: .94; transform: translate(-50%, 0); }
     </style>
 </head>
-<body class="pb-20 min-h-screen flex flex-col items-center">
+<body>
 
-    <div id="login-overlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center px-4">
-        <div class="w-full max-w-xs text-center">
-            <div class="mb-8">
-                <h1 class="text-3xl font-black text-[#4a3f35] tracking-tight uppercase">
-                    <i class="fa-solid fa-door-open text-[#8fb4a2] mr-1"></i>USER LOGIN
-                </h1>
-                <p class="text-sm font-black text-[#8fb4a2] tracking-[0.2em] mt-1 opacity-80">URL_MANAGER</p>
-            </div>
-            
-            <div class="bg-white p-6 ghibli-shadow rounded-2xl space-y-4">
-                <input type="text" id="userInput" placeholder="請輸入使用者代號" 
-                       class="ghibli-input w-full px-4 py-3 text-sm rounded-xl font-bold text-center">
-                <div id="login-history" class="flex flex-wrap justify-center gap-2 max-h-32 overflow-y-auto p-1"></div>
-                <button onclick="handleLogin()" class="w-full bg-[#8fb4a2] text-white py-3 rounded-xl hover:bg-[#7da390] font-bold text-sm transition-colors">
-                    進入系統
-                </button>
-            </div>
-            <p class="text-[10px] text-[#b7ad9d] mt-4 font-bold">系統將記住此代號以便下次自動登入</p>
+    <div id="login-overlay">
+        <div class="login-box">
+            <h1 class="login-title"><span data-ic="user"></span>USER LOGIN</h1>
+            <p class="login-sub">URL_MANAGER</p>
+            <form id="loginForm" class="soft-card login-card" autocomplete="off">
+                <input type="text" id="userInput" class="field" placeholder="請輸入使用者代號" aria-label="使用者代號" autocapitalize="off" autocorrect="off" spellcheck="false">
+                <p id="loginError" class="error" hidden></p>
+                <div id="login-history"></div>
+                <button type="submit" class="btn block">進入系統</button>
+            </form>
+            <p class="hint">系統將記住此代號以便下次自動登入</p>
         </div>
     </div>
 
-    <div id="app-content" class="w-full max-w-lg px-4 mt-8 hidden">
-        
-        <div class="mb-4">
-            <div class="text-center mb-1">
-                <h1 class="text-2xl font-black text-[#4a3f35] tracking-tight uppercase flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-link text-[#8fb4a2] text-xl"></i>URL_MANAGER
-                </h1>
+    <div id="app-content" hidden>
+        <header>
+            <h1 class="app-title"><span data-ic="link"></span>URL_MANAGER</h1>
+            <div class="rule"></div>
+            <div class="user-row">
+                <div class="user-id"><span data-ic="user"></span><span id="display-user-id">---</span></div>
+                <button type="button" id="logoutBtn" class="switch-btn">切換帳號<span data-ic="logout"></span></button>
             </div>
+        </header>
 
-            <div class="border-b-2 border-[#d1c7b7] mb-3"></div>
-
-            <div class="flex justify-between items-center px-2 py-0.5">
-                <div class="flex items-center text-[#4a3f35] max-w-[65%]">
-                    <i class="fa-solid fa-circle-user text-[#8fb4a2] mr-2 text-sm flex-shrink-0"></i>
-                    <span id="display-user-id" class="text-[11px] font-black break-all">---</span>
-                </div>
-                <button onclick="handleLogout()" class="text-[#b7ad9d] hover:text-red-400 py-0.5 px-1 text-sm flex items-center gap-1 font-bold transition-colors">
-                    <span class="text-[10px]">切換帳號</span>
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </button>
+        <div class="sticky-bar">
+            <div class="search-wrap">
+                <span data-ic="search"></span>
+                <input type="search" id="searchInput" class="field" placeholder="搜尋標題或網址" aria-label="搜尋標題或網址" enterkeyhint="search" autocomplete="off">
+                <button type="button" id="searchClear" class="icon-btn" aria-label="清除搜尋" hidden><span data-ic="x"></span></button>
             </div>
+            <div id="filter-bar-container"><div id="filter-bar"></div></div>
         </div>
 
-        <div class="mb-6">
-            <div class="flex gap-1">
-                <button onclick="switchTab('link')" id="tab-link" class="tab-btn active px-5 py-2 rounded-t-xl font-bold">新增連結</button>
-                <button onclick="switchTab('category')" id="tab-category" class="tab-btn px-5 py-2 rounded-t-xl font-bold">新增分類</button>
-            </div>
-            <div class="bg-white p-4 border-2 border-[#d1c7b7] ghibli-shadow rounded-b-2xl rounded-tr-2xl">
-                <div id="panel-link" class="flex flex-col gap-3">
-                    <div class="flex gap-2">
-                        <select id="newLinkCat" class="ghibli-input w-1/3 px-2 py-2.5 rounded-lg text-xs font-bold text-[#6b5e51]"></select>
-                        <input type="text" id="newDesc" placeholder="輸入標題 (選填)" class="ghibli-input w-2/3 px-3 py-2.5 text-xs rounded-lg">
-                    </div>
-                    <input type="text" id="newUrl" placeholder="輸入網址" class="ghibli-input w-full px-3 py-2.5 text-xs rounded-lg">
-                    <button onclick="addItem()" class="w-full bg-[#8fb4a2] text-white py-2.5 rounded-xl hover:bg-[#7da390] font-bold text-sm transition-colors">新增連結 <i class="fa-solid fa-plus ml-1"></i></button>
-                </div>
-                <div id="panel-category" class="hidden flex flex-col gap-3">
-                    <input type="text" id="newCatName" placeholder="輸入新分類名稱" class="ghibli-input w-full px-3 py-2.5 text-xs rounded-lg">
-                    <button onclick="addCategory()" class="w-full bg-[#5c8a97] text-white py-2.5 rounded-xl hover:bg-[#4d7885] font-bold text-sm transition-colors">建立分類 <i class="fa-solid fa-folder ml-1"></i></button>
-                </div>
-            </div>
-        </div>
-
-        <div id="filter-bar-container" class="mb-4"><div id="filter-bar"></div></div>
-        <div class="relative mb-4">
-            <i class="fa-solid fa-search absolute left-4 top-3 text-[#b7ad9d] text-xs"></i>
-            <input type="text" id="searchInput" placeholder="搜尋標題或網址..." class="ghibli-input w-full pl-10 pr-4 py-2.5 border-2 rounded-xl text-xs font-bold">
-        </div>
-        <div id="loading" class="loading-spinner mx-auto my-10"></div>
-        <div id="main-container" class="space-y-3 hidden pb-10"></div>
-        <p id="empty-msg" class="text-center text-[#b7ad9d] mt-10 hidden font-bold text-xs">[ 無資料 ]</p>
+        <div id="loading" class="loading-spinner"></div>
+        <main id="main-container" hidden></main>
+        <p id="empty-msg" hidden></p>
     </div>
 
-    <div id="editModal" class="fixed inset-0 bg-[#4a3f35]/50 hidden flex items-center justify-center z-50 px-4 backdrop-blur-sm">
-        <div class="bg-white p-6 w-full max-w-sm ghibli-shadow rounded-2xl relative">
-            <button onclick="closeEditModal()" class="absolute top-3 right-4 text-[#b7ad9d] hover:text-[#4a3f35] text-lg"><i class="fa-solid fa-times"></i></button>
-            <h3 class="text-sm font-bold text-[#4a3f35] mb-4 border-b pb-2"><i class="fa-solid fa-pen-to-square mr-1"></i>編輯連結</h3>
-            <input type="hidden" id="editKey">
-            <div class="space-y-3">
-                <select id="editCatId" class="ghibli-input w-full px-3 py-2.5 rounded-lg text-xs font-bold"></select>
-                <input type="text" id="editDesc" placeholder="輸入標題 (選填)" class="ghibli-input w-full px-3 py-2.5 rounded-lg text-xs">
-                <input type="text" id="editUrl" class="ghibli-input w-full px-3 py-2.5 rounded-lg text-[10px] font-mono">
+    <button type="button" id="fab" aria-label="新增連結" hidden><span data-ic="plus"></span></button>
+
+    <!-- 新增連結 -->
+    <div id="addSheet" class="overlay" hidden>
+        <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="addTitle">
+            <div class="sheet-head">
+                <h2 id="addTitle">新增連結</h2>
+                <button type="button" class="icon-btn" data-close aria-label="關閉"><span data-ic="x"></span></button>
             </div>
-            <div class="flex justify-between items-center mt-6 gap-3">
-                <button onclick="deleteCurrentItem()" class="px-4 py-2 text-red-400 font-bold text-xs">刪除</button>
-                <button onclick="saveEdit()" class="px-7 py-2.5 bg-[#8fb4a2] text-white font-bold rounded-xl text-xs">儲存更新</button>
-            </div>
+            <form id="addForm" autocomplete="off" novalidate>
+                <input type="text" inputmode="url" id="newUrl" class="field" placeholder="網址" aria-label="網址" autocapitalize="off" autocorrect="off" spellcheck="false">
+                <input type="text" id="newDesc" class="field" placeholder="標題（選填）" aria-label="標題">
+                <select id="newLinkCat" class="field" aria-label="分類"></select>
+                <button type="submit" class="btn block">新增<span data-ic="plus"></span></button>
+            </form>
         </div>
     </div>
+
+    <!-- 編輯連結 -->
+    <div id="editSheet" class="overlay" hidden>
+        <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+            <div class="sheet-head">
+                <h2 id="editTitle">編輯連結</h2>
+                <button type="button" class="icon-btn" data-close aria-label="關閉"><span data-ic="x"></span></button>
+            </div>
+            <form id="editForm" autocomplete="off" novalidate>
+                <input type="hidden" id="editKey">
+                <input type="text" inputmode="url" id="editUrl" class="field" placeholder="網址" aria-label="網址" autocapitalize="off" autocorrect="off" spellcheck="false">
+                <input type="text" id="editDesc" class="field" placeholder="標題（選填）" aria-label="標題">
+                <select id="editCatId" class="field" aria-label="分類"></select>
+                <div class="sheet-actions">
+                    <button type="button" id="deleteBtn" class="btn ghost-danger">刪除</button>
+                    <button type="submit" class="btn">儲存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 管理分類 -->
+    <div id="catSheet" class="overlay" hidden>
+        <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="catTitle">
+            <div class="sheet-head">
+                <h2 id="catTitle">分類</h2>
+                <button type="button" class="icon-btn" data-close aria-label="關閉"><span data-ic="x"></span></button>
+            </div>
+            <div id="cat-list"></div>
+            <form id="catForm" class="cat-add" autocomplete="off">
+                <input type="text" id="newCatName" class="field" placeholder="新分類名稱" aria-label="新分類名稱">
+                <button type="submit" class="btn teal">建立</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast" role="status" aria-live="polite"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, push, set, remove, update, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue, push, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDlxwcj-PSv2Bc1UFgjlVnKUmIzvwXmBig",
@@ -211,82 +328,66 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        let state = { userId: '', links: [], categories: [], currentFilter: 'all' };
+
+        const state = { userId: '', links: [], categories: [], filter: 'all', term: '', loaded: { links: false, cats: false }, collapsed: new Set() };
         let linkSortables = [], catSortable = null;
         const ghibliColors = ["#8fb4a2", "#5c8a97", "#d6a278", "#e3b04b", "#9b8b7a", "#a8c69f", "#7892a0", "#c8a49a"];
+        const UNCAT = { id: 'uncategorized', name: '未分類' };
 
-        function renderLoginHistory() {
-            const history = JSON.parse(localStorage.getItem('url_manager_history') || '[]');
-            const container = document.getElementById('login-history');
-            container.innerHTML = '';
-            
-            history.forEach(id => {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'flex items-center bg-[#f0ede4] rounded-full px-3 py-1 gap-1 border border-[#d1c7b7]';
-                
-                const idBtn = document.createElement('button');
-                idBtn.className = 'text-[10px] text-[#6b5e51] font-bold hover:text-[#4a3f35]';
-                idBtn.textContent = id;
-                idBtn.onclick = () => { document.getElementById('userInput').value = id; handleLogin(); };
-                
-                const delBtn = document.createElement('button');
-                delBtn.className = 'text-[10px] text-red-300 hover:text-red-500 ml-1 pl-1 border-l border-[#d1c7b7]';
-                delBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
-                delBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    removeHistoryId(id);
-                };
-                
-                wrapper.appendChild(idBtn);
-                wrapper.appendChild(delBtn);
-                container.appendChild(wrapper);
-            });
+        /* ---------- 小工具 ---------- */
+        const $ = (id) => document.getElementById(id);
+        const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+
+        const ICONS = {
+            plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+            x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+            check: '<path d="M20 6 9 17l-5-5"/>',
+            search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+            copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+            pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>',
+            grip: '<circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/>',
+            chevron: '<path d="m6 9 6 6 6-6"/>',
+            logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+            user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+            link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+            trash: '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+            folder: '<path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/>'
+        };
+        const icon = (name) => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
+        document.querySelectorAll('[data-ic]').forEach(n => { n.outerHTML = icon(n.dataset.ic); });
+
+        const store = {
+            get(key, fallback) { try { const v = localStorage.getItem(key); return v == null ? fallback : JSON.parse(v); } catch { return fallback; } },
+            getRaw(key) { try { return localStorage.getItem(key); } catch { return null; } },
+            set(key, val) { try { localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val)); } catch {} },
+            del(key) { try { localStorage.removeItem(key); } catch {} }
+        };
+
+        let toastTimer;
+        function toast(msg) {
+            const t = $('toast'); t.textContent = msg; t.classList.add('show');
+            clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
         }
 
-        window.removeHistoryId = (id) => {
-            let history = JSON.parse(localStorage.getItem('url_manager_history') || '[]');
-            history = history.filter(item => item !== id);
-            localStorage.setItem('url_manager_history', JSON.stringify(history));
-            renderLoginHistory();
-        };
-
-        window.handleLogin = () => {
-            const id = document.getElementById('userInput').value.trim();
-            if (!id) return;
-            state.userId = id;
-            let history = JSON.parse(localStorage.getItem('url_manager_history') || '[]');
-            if (!history.includes(id)) {
-                history.unshift(id);
-                localStorage.setItem('url_manager_history', JSON.stringify(history.slice(0, 10)));
-            }
-            localStorage.setItem('url_manager_current_user', id);
-            document.getElementById('display-user-id').textContent = id;
-            document.getElementById('login-overlay').classList.add('hidden');
-            document.getElementById('app-content').classList.remove('hidden');
-            initDataListeners();
-        };
-
-        window.handleLogout = () => {
-            if (confirm('切換使用者？')) {
-                localStorage.removeItem('url_manager_current_user');
-                location.reload();
-            }
-        };
-
-        function initDataListeners() {
-            onValue(ref(db, `users/${state.userId}/links`), (snapshot) => {
-                const data = snapshot.val();
-                state.links = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
-                state.links.sort((a, b) => (a.order || 0) - (b.order || 0));
-                renderFilterBar(); checkAndRender();
-            });
-            onValue(ref(db, `users/${state.userId}/categories`), (snapshot) => {
-                const data = snapshot.val();
-                state.categories = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
-                state.categories.sort((a, b) => (a.order || 0) - (b.order || 0));
-                updateCategoryDropdowns(); renderFilterBar(); checkAndRender();
-            });
+        // 內容照使用者輸入的原樣儲存（清單也會存 API KEY 等非網址文字），
+        // 只有「看起來是網址」的項目才在開啟時補上 https://
+        const HAS_SCHEME = /^[a-z][a-z0-9+.-]*:\/\//i;
+        const BARE_DOMAIN = /^([a-z0-9-]{1,63}\.)+[a-z]{2,24}(:\d{1,5})?([\/?#]\S*)?$/i;
+        function safeHref(u) {
+            u = (u || '').trim();
+            if (!u || /\s/.test(u)) return '';
+            let n = '';
+            if (HAS_SCHEME.test(u) || /^(mailto|tel):/i.test(u)) n = u;
+            else if (BARE_DOMAIN.test(u) || /^localhost(:\d{1,5})?([\/?#]\S*)?$/i.test(u)) n = 'https://' + u;
+            if (!n) return '';
+            try { return ['http:', 'https:', 'mailto:', 'tel:'].includes(new URL(n).protocol) ? n : ''; } catch { return ''; }
         }
+        function hostOf(u) {
+            const h = safeHref(u);
+            if (!h) return u || '';
+            try { return new URL(h).hostname.replace(/^www\./, '') || u; } catch { return u; }
+        }
+        const urlKey = (u) => { const h = safeHref(u); return h ? h.replace(/\/+$/, '').toLowerCase() : (u || '').trim(); };
 
         function getCatColor(id) {
             if (id === 'all') return "#4a3f35";
@@ -294,198 +395,449 @@
             let hash = 0; for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
             return ghibliColors[Math.abs(hash) % ghibliColors.length];
         }
+        const catExists = (id) => state.categories.some(c => c.id === id);
+        const isUncat = (l) => !l.categoryId || !catExists(l.categoryId);
+        const userPath = (p) => `users/${state.userId}/${p}`;
 
+        /* ---------- 返回鍵 / History ---------- */
+        const OVERLAYS = ['addSheet', 'editSheet', 'catSheet'];
+        function hideOverlays() { OVERLAYS.forEach(id => { $(id).hidden = true; }); }
+        function openOverlay(id, focusId) {
+            hideOverlays();
+            $(id).hidden = false;
+            const cur = history.state || {};
+            if (cur.ov) history.replaceState({ ...cur, ov: id }, '');
+            else history.pushState({ ...cur, ov: id }, '');
+            if (focusId) setTimeout(() => $(focusId).focus(), 60);
+        }
+        function closeOverlay() {
+            hideOverlays();
+            if (history.state && history.state.ov) history.back();
+        }
+        function syncViewHistory() {
+            const active = state.filter !== 'all' || !!state.term;
+            const has = !!(history.state && history.state.view);
+            if (active && !has) history.pushState({ view: true }, '');
+            else if (!active && has) history.back();
+        }
+        window.addEventListener('popstate', (e) => {
+            hideOverlays();
+            const st = e.state || {};
+            if (!st.view && (state.filter !== 'all' || state.term)) {
+                state.filter = 'all'; state.term = '';
+                $('searchInput').value = '';
+                saveFilter(); renderAll();
+            }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && OVERLAYS.some(id => !$(id).hidden)) closeOverlay();
+        });
+        OVERLAYS.forEach(id => {
+            const ov = $(id);
+            let downOnBackdrop = false;
+            ov.addEventListener('pointerdown', (e) => { downOnBackdrop = e.target === ov; });
+            ov.addEventListener('click', (e) => { if (e.target === ov && downOnBackdrop) closeOverlay(); });
+            ov.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeOverlay));
+        });
+
+        /* ---------- 登入 ---------- */
+        function renderLoginHistory() {
+            const history_ = store.get('url_manager_history', []);
+            const container = $('login-history');
+            container.innerHTML = '';
+            history_.forEach(id => {
+                const wrapper = el('div', 'history-chip');
+                const idBtn = el('button', 'h-id', id);
+                idBtn.type = 'button';
+                idBtn.onclick = () => { $('userInput').value = id; handleLogin(); };
+                const delBtn = el('button', 'h-del');
+                delBtn.type = 'button';
+                delBtn.setAttribute('aria-label', `移除 ${id}`);
+                delBtn.innerHTML = icon('x');
+                delBtn.onclick = () => {
+                    store.set('url_manager_history', store.get('url_manager_history', []).filter(item => item !== id));
+                    renderLoginHistory();
+                };
+                wrapper.append(idBtn, delBtn);
+                container.appendChild(wrapper);
+            });
+        }
+
+        function handleLogin() {
+            const id = $('userInput').value.trim();
+            const err = $('loginError');
+            err.hidden = true;
+            if (!id) return;
+            if (/[.#$\[\]\/]/.test(id)) {
+                err.textContent = '代號不能包含 . # $ [ ] /';
+                err.hidden = false;
+                return;
+            }
+            state.userId = id;
+            const history_ = store.get('url_manager_history', []);
+            if (!history_.includes(id)) store.set('url_manager_history', [id, ...history_].slice(0, 10));
+            store.set('url_manager_current_user', id);
+            state.filter = store.getRaw('url_manager_filter_' + id) || 'all';
+            state.collapsed = new Set(store.get('url_manager_collapsed_' + id, []));
+            $('display-user-id').textContent = id;
+            $('login-overlay').hidden = true;
+            $('app-content').hidden = false;
+            $('fab').hidden = false;
+            initDataListeners();
+        }
+        $('loginForm').addEventListener('submit', (e) => { e.preventDefault(); handleLogin(); });
+        $('logoutBtn').addEventListener('click', () => {
+            if (confirm('切換使用者？')) { store.del('url_manager_current_user'); location.reload(); }
+        });
+
+        /* ---------- 資料 ---------- */
+        function initDataListeners() {
+            onValue(ref(db, userPath('links')), (snapshot) => {
+                const data = snapshot.val();
+                state.links = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+                state.links.sort((a, b) => (a.order || 0) - (b.order || 0));
+                state.loaded.links = true; onData();
+            });
+            onValue(ref(db, userPath('categories')), (snapshot) => {
+                const data = snapshot.val();
+                state.categories = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+                state.categories.sort((a, b) => (a.order || 0) - (b.order || 0));
+                state.loaded.cats = true; onData();
+            });
+        }
+        let firstRender = true;
+        function onData() {
+            // 連結與分類都到齊才顯示，避免先閃成「未分類」
+            if (!state.loaded.links || !state.loaded.cats) return;
+            if (state.filter !== 'all' && state.filter !== 'uncategorized' && !catExists(state.filter)) state.filter = 'all';
+            if (state.filter === 'uncategorized' && !state.links.some(isUncat)) state.filter = 'all';
+            $('loading').hidden = true;
+            $('main-container').hidden = false;
+            updateCategoryDropdowns();
+            renderCatList();
+            renderAll();
+            if (firstRender) {
+                firstRender = false;
+                if (history.state && history.state.ov) history.back();
+                else syncViewHistory();
+            }
+        }
+        function saveFilter() { store.set('url_manager_filter_' + state.userId, state.filter); }
+        function renderAll() {
+            $('searchClear').hidden = !state.term;
+            renderFilterBar(); renderMain();
+        }
+        function setFilter(id) {
+            state.filter = id; saveFilter(); renderAll(); syncViewHistory();
+            window.scrollTo({ top: 0 });
+        }
+
+        /* ---------- 分類列 ---------- */
         function renderFilterBar() {
-            const bar = document.getElementById('filter-bar'); bar.innerHTML = '';
-            if(catSortable) catSortable.destroy();
+            const bar = $('filter-bar'); bar.innerHTML = '';
+            if (catSortable) { catSortable.destroy(); catSortable = null; }
             bar.appendChild(createFilterChip('全部', 'all'));
             state.categories.forEach(cat => {
                 const chip = createFilterChip(cat.name, cat.id);
                 chip.dataset.catId = cat.id; bar.appendChild(chip);
             });
-            if (state.links.some(l => !l.categoryId || !state.categories.find(c => c.id === l.categoryId)))
-                bar.appendChild(createFilterChip('未分類', 'uncategorized'));
-            catSortable = Sortable.create(bar, {
-                animation: 200, delay: 200, filter: '.static-chip',
-                onEnd: () => {
-                    const updates = {}; let idx = 0;
-                    Array.from(bar.children).forEach(el => { if(el.dataset.catId) updates[`users/${state.userId}/categories/${el.dataset.catId}/order`] = idx++; });
-                    update(ref(db), updates);
-                }
-            });
+            if (state.links.some(isUncat)) bar.appendChild(createFilterChip('未分類', 'uncategorized'));
+
+            const manage = el('button', 'icon-btn chip-manage static-chip');
+            manage.type = 'button';
+            manage.setAttribute('aria-label', '管理分類');
+            manage.innerHTML = icon('folder');
+            manage.onclick = () => openOverlay('catSheet', state.categories.length ? null : 'newCatName');
+            bar.appendChild(manage);
+
+            if (window.Sortable) {
+                catSortable = Sortable.create(bar, {
+                    animation: 200, delay: 200, delayOnTouchOnly: true, filter: '.static-chip', preventOnFilter: false,
+                    onMove: (evt) => !evt.related.classList.contains('static-chip'),
+                    onEnd: () => {
+                        const updates = {}; let idx = 0;
+                        Array.from(bar.children).forEach(c => { if (c.dataset.catId) updates[userPath(`categories/${c.dataset.catId}/order`)] = idx++; });
+                        update(ref(db), updates);
+                    }
+                });
+            }
         }
 
         function createFilterChip(text, filterId) {
-            const btn = document.createElement('button');
-            const isActive = state.currentFilter === filterId, color = getCatColor(filterId);
-            btn.className = `filter-chip ${isActive ? 'active' : ''}`;
-            btn.textContent = text;
+            const btn = el('button', 'filter-chip', text);
+            btn.type = 'button';
+            const isActive = state.filter === filterId, color = getCatColor(filterId);
+            if (isActive) btn.classList.add('active');
+            btn.setAttribute('aria-pressed', String(isActive));
             btn.style.borderColor = color;
-            btn.style.backgroundColor = isActive ? color : "#ffffff";
+            if (isActive) btn.style.backgroundColor = color;
             btn.style.color = isActive ? "#ffffff" : color;
-            
             if (filterId === 'all' || filterId === 'uncategorized') btn.classList.add('static-chip');
-            btn.onclick = () => { state.currentFilter = filterId; renderFilterBar(); checkAndRender(); };
+            btn.onclick = () => setFilter(filterId);
             return btn;
         }
 
-        function renderMain(filterText = '') {
-            const container = document.getElementById('main-container'); 
+        /* ---------- 連結清單 ---------- */
+        const matchTerm = (item, term) => !term || (item.desc || '').toLowerCase().includes(term) || (item.url || '').toLowerCase().includes(term);
+
+        function renderMain() {
+            const container = $('main-container');
             container.innerHTML = '';
-            
             linkSortables.forEach(s => s.destroy());
             linkSortables = [];
 
-            // 嚴謹設備檢測：若為手機版則停用連結拖曳功能
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const term = state.term.toLowerCase();
+            const searching = !!term;
+            // 搜尋時一律跨全部分類
+            const showAll = searching || state.filter === 'all';
+            let groups;
+            if (showAll) {
+                groups = state.categories.map(cat => ({ cat, links: state.links.filter(l => l.categoryId === cat.id) }));
+                groups.push({ cat: UNCAT, links: state.links.filter(isUncat) });
+            } else if (state.filter === 'uncategorized') {
+                groups = [{ cat: UNCAT, links: state.links.filter(isUncat) }];
+            } else {
+                const cat = state.categories.find(c => c.id === state.filter);
+                groups = cat ? [{ cat, links: state.links.filter(l => l.categoryId === cat.id) }] : [];
+            }
 
-            const term = filterText.toLowerCase(); let hasData = false;
-            const renderBlock = (cat, links, isUncat) => {
-                if (links.length > 0) {
-                    const ul = document.createElement('ul'); 
-                    ul.className = 'space-y-3 min-h-[10px] pb-4'; 
-                    links.forEach(link => {
-                        const li = document.createElement('li');
-                        li.dataset.id = link.id;
-                        li.className = `bg-white p-4 ghibli-shadow rounded-2xl flex items-center gap-3 transition-all hover:bg-[#faf9f6] sortable-item`;
-                        
-                        const catColor = isUncat ? '#9b8b7a' : getCatColor(cat.id);
-                        const tag = (state.currentFilter === 'all' || state.currentFilter === 'uncategorized') 
-                            ? `<span class="item-tag" style="color:${catColor}; border-color:${catColor}; background-color:${catColor}10">${cat.name}</span>` 
-                            : '';
+            let hasData = false;
+            groups.forEach(({ cat, links }) => {
+                links = links.filter(l => matchTerm(l, term));
+                if (!links.length) return;
+                hasData = true;
+                const section = el('section', 'group');
+                const collapsed = showAll && !searching && state.collapsed.has(cat.id);
 
-                        const displayDesc = link.desc && link.desc.trim() !== "" ? link.desc : "[ 無標題 ]";
-                        // 若非手機版才加上 drag-handle 樣式
-                        const dragClass = isMobile ? "" : "drag-handle";
+                if (showAll) {
+                    const head = el('button', 'group-head');
+                    head.type = 'button';
+                    head.setAttribute('aria-expanded', String(!collapsed));
+                    const dot = el('span', 'dot'); dot.style.backgroundColor = getCatColor(cat.id);
+                    const chev = el('span', 'chev'); chev.innerHTML = icon('chevron');
+                    head.append(dot, el('span', 'g-name', cat.name), el('span', 'g-count', String(links.length)), chev);
+                    head.onclick = () => {
+                        if (searching) return;
+                        if (state.collapsed.has(cat.id)) state.collapsed.delete(cat.id); else state.collapsed.add(cat.id);
+                        store.set('url_manager_collapsed_' + state.userId, [...state.collapsed]);
+                        renderMain();
+                    };
+                    section.appendChild(head);
+                }
 
-                        li.innerHTML = `
-                            <div class="flex-grow min-w-0 pointer-events-none select-none">
-                                <div class="flex items-center">
-                                    <span class="item-title truncate">${displayDesc}</span>${tag}
-                                </div>
-                                <div class="item-url font-mono">
-                                    <a href="${link.url}" target="_blank" class="hover:underline pointer-events-auto">${link.url}</a>
-                                </div>
-                            </div>
-                            <div class="flex flex-col gap-1 flex-shrink-0 border-l-2 border-[#f0ede4] pl-2 pointer-events-auto ${dragClass}">
-                                <button onclick="copyToClipboard(event, this, '${link.desc || ''}', '${link.url}')" class="text-[#b7ad9d] hover:text-[#8fb4a2] p-1.5"><i class="fa-regular fa-copy"></i></button>
-                                <button onclick="openEditModal(event, '${link.id}', '${link.desc || ''}', '${link.url}', '${link.categoryId || ''}')" class="text-[#b7ad9d] hover:text-[#5c8a97] p-1.5"><i class="fa-solid fa-pen"></i></button>
-                            </div>`;
-                        ul.appendChild(li);
-                    });
-                    container.appendChild(ul); 
-                    hasData = true;
-
-                    // 僅在非手機版環境初始化拖曳功能
-                    if (!isMobile) {
-                        const s = Sortable.create(ul, {
-                            animation: 250,
-                            handle: ".drag-handle",
-                            ghostClass: "sortable-ghost",
-                            chosenClass: "sortable-chosen",
-                            dragClass: "sortable-drag",
-                            placeholderClass: "sortable-placeholder", 
-                            forceFallback: false,
+                if (!collapsed) {
+                    const ul = el('ul', 'link-list');
+                    links.forEach(link => ul.appendChild(createLinkCard(link, !searching)));
+                    section.appendChild(ul);
+                    if (!searching && window.Sortable) {
+                        linkSortables.push(Sortable.create(ul, {
+                            animation: 220, handle: '.handle', ghostClass: 'sortable-ghost',
+                            forceFallback: true, fallbackTolerance: 3,
                             onEnd: () => {
                                 const updates = {};
-                                Array.from(ul.children).forEach((el, idx) => {
-                                    if(el.dataset.id) updates[`users/${state.userId}/links/${el.dataset.id}/order`] = idx;
-                                });
+                                Array.from(ul.children).forEach((li, idx) => { if (li.dataset.id) updates[userPath(`links/${li.dataset.id}/order`)] = idx; });
                                 update(ref(db), updates);
                             }
-                        });
-                        linkSortables.push(s);
+                        }));
                     }
                 }
-            };
+                container.appendChild(section);
+            });
 
-            if (state.currentFilter === 'all') {
-                state.categories.forEach(cat => renderBlock(cat, state.links.filter(l => l.categoryId === cat.id && matchFilter(l, term)), false));
-                renderBlock({id:'uncategorized', name:'未分類'}, state.links.filter(l => (!l.categoryId || !state.categories.find(c => c.id === l.categoryId)) && matchFilter(l, term)), true);
-            } else {
-                const activeCat = state.currentFilter === 'uncategorized' ? {id:'uncategorized', name:'未分類'} : state.categories.find(c => c.id === state.currentFilter);
-                if (activeCat) renderBlock(activeCat, state.links.filter(l => ((state.currentFilter==='uncategorized') ? (!l.categoryId || !state.categories.find(c => c.id === l.categoryId)) : (l.categoryId===state.currentFilter)) && matchFilter(l, term)), state.currentFilter==='uncategorized');
-            }
-            document.getElementById('empty-msg').classList.toggle('hidden', hasData);
+            const empty = $('empty-msg');
+            empty.textContent = searching ? '找不到符合的連結' : '還沒有連結';
+            empty.hidden = hasData;
         }
 
-        function matchFilter(item, term) { return !term || item.desc?.toLowerCase().includes(term) || item.url?.toLowerCase().includes(term); }
-        function checkAndRender() { document.getElementById('loading').style.display = 'none'; document.getElementById('main-container').classList.remove('hidden'); renderMain(document.getElementById('searchInput').value); }
-        window.switchTab = (t) => { document.getElementById('panel-link').classList.toggle('hidden', t!=='link'); document.getElementById('panel-category').classList.toggle('hidden', t!=='category'); document.getElementById('tab-link').classList.toggle('active', t==='link'); document.getElementById('tab-category').classList.toggle('active', t==='category'); };
-        
-        window.openEditModal = (e, k, d, u, c) => { 
-            if (e) e.stopPropagation(); // 嚴謹防止事件冒泡觸發父層拖曳或意外行為
-            document.getElementById('editKey').value = k; 
-            document.getElementById('editDesc').value = d; 
-            document.getElementById('editUrl').value = u; 
-            document.getElementById('editCatId').value = c || ""; 
-            document.getElementById('editModal').classList.remove('hidden'); 
-        };
+        function createLinkCard(link, sortable) {
+            const li = el('li', 'link-card soft-card');
+            li.dataset.id = link.id;
+            const title = (link.desc || '').trim() || hostOf(link.url);
 
-        window.closeEditModal = () => document.getElementById('editModal').classList.add('hidden');
-        
-        window.copyToClipboard = (e, b, d, u) => { 
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation(); // 核心修正：防止點擊複製時觸發拖曳項目的位移
+            if (sortable) {
+                const handle = el('button', 'handle');
+                handle.type = 'button';
+                handle.setAttribute('aria-label', `拖曳排序：${title}`);
+                handle.innerHTML = icon('grip');
+                li.appendChild(handle);
             }
-            const textToCopy = d && d.trim() !== "" ? `${d} - ${u}` : u;
-            const textArea = document.createElement("textarea");
-            textArea.value = textToCopy;
-            textArea.style.position = "fixed"; 
-            textArea.style.left = "-9999px";
-            textArea.style.top = "0";
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            try {
-                const successful = document.execCommand('copy');
-                if (successful) {
-                    const icon = b.innerHTML; 
-                    b.innerHTML = '<i class="fa-solid fa-check text-[#8fb4a2]"></i>'; 
-                    setTimeout(() => b.innerHTML = icon, 1000); 
-                }
-            } catch (err) {
-                console.error('Copy failed', err);
+
+            const href = safeHref(link.url);
+            const copyBtn = el('button', 'icon-btn');
+            let a;
+            if (href) {
+                a = el('a', 'card-main');
+                a.href = href;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                a.draggable = false;
+            } else {
+                // 非網址（例如 API KEY）：點卡片直接複製
+                a = el('button', 'card-main');
+                a.type = 'button';
+                a.onclick = () => copyUrl(copyBtn, link.url);
             }
-            document.body.removeChild(textArea);
-        };
+            a.append(el('span', 'item-title', title), el('span', 'item-url', link.url || ''));
+            li.appendChild(a);
 
-        function updateCategoryDropdowns() { let opts = '<option value="">未分類</option>'; state.categories.forEach(cat => opts += `<option value="${cat.id}">${cat.name}</option>`); document.getElementById('newLinkCat').innerHTML = document.getElementById('editCatId').innerHTML = opts; }
-        
-        window.addItem = () => { 
-            const desc = document.getElementById('newDesc').value.trim();
-            const url = document.getElementById('newUrl').value.trim();
-            const catId = document.getElementById('newLinkCat').value; 
-            if (!url) return; 
-            push(ref(db, `users/${state.userId}/links`), { 
-                desc: desc || "", 
-                url: url, 
-                categoryId: catId || null, 
-                order: 999 
-            }); 
-            document.getElementById('newDesc').value = document.getElementById('newUrl').value = ''; 
-        };
+            const actions = el('div', 'card-actions');
+            copyBtn.type = 'button';
+            copyBtn.setAttribute('aria-label', `複製：${title}`);
+            copyBtn.innerHTML = icon('copy');
+            copyBtn.onclick = () => copyUrl(copyBtn, link.url);
+            const editBtn = el('button', 'icon-btn');
+            editBtn.type = 'button';
+            editBtn.setAttribute('aria-label', `編輯：${title}`);
+            editBtn.innerHTML = icon('pencil');
+            editBtn.onclick = () => openEdit(link);
+            actions.append(copyBtn, editBtn);
+            li.appendChild(actions);
+            return li;
+        }
 
-        window.addCategory = () => { const name = document.getElementById('newCatName').value.trim(); if(!name) return; push(ref(db, `users/${state.userId}/categories`), { name, order: state.categories.length }); document.getElementById('newCatName').value = ''; switchTab('link'); };
-        
-        window.saveEdit = () => { 
-            const k = document.getElementById('editKey').value; 
-            update(ref(db, `users/${state.userId}/links/${k}`), { 
-                desc: document.getElementById('editDesc').value.trim() || "", 
-                url: document.getElementById('editUrl').value.trim(), 
-                categoryId: document.getElementById('editCatId').value || null 
-            }).then(closeEditModal); 
-        };
+        async function copyUrl(btn, url) {
+            const text = safeHref(url) || (url || '');
+            let ok = false;
+            try { await navigator.clipboard.writeText(text); ok = true; } catch {
+                const ta = document.createElement('textarea');
+                ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+                document.body.appendChild(ta); ta.select();
+                try { ok = document.execCommand('copy'); } catch {}
+                ta.remove();
+            }
+            if (ok) {
+                btn.innerHTML = icon('check'); btn.style.color = 'var(--sage)';
+                setTimeout(() => { btn.innerHTML = icon('copy'); btn.style.color = ''; }, 1000);
+                toast('已複製');
+            } else toast('複製失敗');
+        }
 
-        window.deleteCurrentItem = () => confirm('確定刪除？') && remove(ref(db, `users/${state.userId}/links/${document.getElementById('editKey').value}`)).then(closeEditModal);
-        document.getElementById('searchInput').addEventListener('input', (e) => renderMain(e.target.value));
-        
-        window.onload = () => {
-            renderLoginHistory();
-            const lastUser = localStorage.getItem('url_manager_current_user');
-            if (lastUser) { document.getElementById('userInput').value = lastUser; handleLogin(); }
-        };
+        /* ---------- 搜尋 ---------- */
+        $('searchInput').addEventListener('input', (e) => {
+            state.term = e.target.value.trim();
+            $('searchClear').hidden = !state.term;
+            renderMain(); syncViewHistory();
+        });
+        $('searchInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') e.target.blur(); });
+        $('searchClear').addEventListener('click', () => {
+            $('searchInput').value = ''; state.term = '';
+            renderAll(); syncViewHistory();
+            $('searchInput').focus();
+        });
+
+        /* ---------- 新增 / 編輯連結 ---------- */
+        function updateCategoryDropdowns() {
+            [$('newLinkCat'), $('editCatId')].forEach(sel => {
+                const prev = sel.value;
+                sel.innerHTML = '';
+                const none = el('option', null, '未分類'); none.value = '';
+                sel.appendChild(none);
+                state.categories.forEach(cat => { const o = el('option', null, cat.name); o.value = cat.id; sel.appendChild(o); });
+                sel.value = catExists(prev) ? prev : '';
+            });
+        }
+
+        $('fab').addEventListener('click', () => {
+            $('newLinkCat').value = catExists(state.filter) ? state.filter : '';
+            openOverlay('addSheet', 'newUrl');
+        });
+
+        $('addForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const url = $('newUrl').value.trim();
+            if (!url) { $('newUrl').focus(); return; }
+            if (state.links.some(l => urlKey(l.url) === urlKey(url)) && !confirm('這筆內容已經在清單裡，仍要新增？')) return;
+            const maxOrder = state.links.reduce((m, l) => Math.max(m, l.order || 0), -1);
+            push(ref(db, userPath('links')), {
+                desc: $('newDesc').value.trim(),
+                url,
+                categoryId: $('newLinkCat').value || null,
+                order: maxOrder + 1
+            });
+            $('newDesc').value = $('newUrl').value = '';
+            closeOverlay();
+            toast('已新增');
+        });
+
+        function openEdit(link) {
+            $('editKey').value = link.id;
+            $('editDesc').value = link.desc || '';
+            $('editUrl').value = link.url || '';
+            $('editCatId').value = catExists(link.categoryId) ? link.categoryId : '';
+            openOverlay('editSheet');
+        }
+        $('editForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const url = $('editUrl').value.trim();
+            if (!url) { $('editUrl').focus(); return; }
+            update(ref(db, userPath(`links/${$('editKey').value}`)), {
+                desc: $('editDesc').value.trim(),
+                url,
+                categoryId: $('editCatId').value || null
+            });
+            closeOverlay();
+            toast('已儲存');
+        });
+        $('deleteBtn').addEventListener('click', () => {
+            if (!confirm('確定刪除？')) return;
+            remove(ref(db, userPath(`links/${$('editKey').value}`)));
+            closeOverlay();
+            toast('已刪除');
+        });
+
+        /* ---------- 管理分類 ---------- */
+        function renderCatList() {
+            const list = $('cat-list');
+            if (list.contains(document.activeElement)) return; // 正在改名時不重繪
+            list.innerHTML = '';
+            state.categories.forEach(cat => {
+                const row = el('div', 'cat-row');
+                const dot = el('span', 'dot'); dot.style.backgroundColor = getCatColor(cat.id);
+                const input = el('input', 'field');
+                input.type = 'text'; input.value = cat.name;
+                input.setAttribute('aria-label', `分類名稱：${cat.name}`);
+                const commit = () => {
+                    const name = input.value.trim();
+                    if (!name) { input.value = cat.name; return; }
+                    if (name !== cat.name) { update(ref(db, userPath(`categories/${cat.id}`)), { name }); toast('已改名'); }
+                };
+                input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
+                input.addEventListener('blur', () => { commit(); setTimeout(renderCatList, 0); });
+                const del = el('button', 'icon-btn');
+                del.type = 'button';
+                del.setAttribute('aria-label', `刪除分類：${cat.name}`);
+                del.innerHTML = icon('trash');
+                del.onclick = () => deleteCategory(cat);
+                row.append(dot, input, del);
+                list.appendChild(row);
+            });
+        }
+
+        function deleteCategory(cat) {
+            const inCat = state.links.filter(l => l.categoryId === cat.id);
+            const msg = inCat.length ? `刪除「${cat.name}」？\n裡面的 ${inCat.length} 筆連結會移到未分類。` : `刪除「${cat.name}」？`;
+            if (!confirm(msg)) return;
+            const updates = {};
+            updates[userPath(`categories/${cat.id}`)] = null;
+            inCat.forEach(l => { updates[userPath(`links/${l.id}/categoryId`)] = null; });
+            update(ref(db), updates);
+            toast('已刪除分類');
+        }
+
+        $('catForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = $('newCatName').value.trim();
+            if (!name) return;
+            const maxOrder = state.categories.reduce((m, c) => Math.max(m, c.order || 0), -1);
+            push(ref(db, userPath('categories')), { name, order: maxOrder + 1 });
+            $('newCatName').value = '';
+            toast('已建立分類');
+        });
+
+        /* ---------- 啟動 ---------- */
+        renderLoginHistory();
+        const lastUser = store.getRaw('url_manager_current_user');
+        if (lastUser) { $('userInput').value = lastUser; handleLogin(); }
     </script>
 </body>
 </html>
