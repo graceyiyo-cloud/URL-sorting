@@ -86,14 +86,8 @@
         .login-title svg { color: var(--sage); }
         .login-sub { font-size: 14px; font-weight: 900; color: var(--sage); letter-spacing: 0.2em; margin-top: 4px; opacity: .8; }
         .login-card { margin-top: 32px; padding: 24px; border-radius: 16px; display: flex; flex-direction: column; gap: 16px; }
-        .login-card .field { text-align: center; font-weight: 700; }
-        #login-history { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-height: 9rem; overflow-y: auto; }
-        #login-history:empty { display: none; }
-        .history-chip { display: flex; align-items: center; background: var(--line-soft); border: 1px solid var(--line); border-radius: 999px; }
-        .history-chip button { min-height: 36px; font-size: 13px; font-weight: 700; color: var(--ink-soft); }
-        .history-chip .h-id { padding: 0 6px 0 14px; }
-        .history-chip .h-del { padding: 0 10px 0 8px; color: var(--danger); border-left: 1px solid var(--line); }
-        .hint { font-size: 12px; color: var(--muted); font-weight: 700; margin-top: 16px; }
+        .btn:disabled { opacity: .6; cursor: wait; }
+        #auth-loading { text-align: center; padding-top: 20vh; color: var(--muted); }
         .error { font-size: 13px; color: var(--danger); font-weight: 700; }
 
         /* 主畫面 */
@@ -209,6 +203,9 @@
         .cat-row .icon-btn:hover { color: var(--danger); }
         .cat-add { display: flex; gap: 8px; flex-direction: row !important; }
         .cat-add .btn { padding: 0 16px; flex-shrink: 0; }
+        #importForm { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
+        #importForm .btn { background: var(--line-soft); color: var(--ink-soft); }
+        #importForm .field { min-width: 0; }
 
         #toast {
             position: fixed; left: 50%; bottom: calc(96px + var(--safe-b)); z-index: 200;
@@ -222,17 +219,15 @@
 </head>
 <body>
 
-    <div id="login-overlay">
+    <div id="auth-loading" role="status"><div class="loading-spinner"></div>載入中…</div>
+    <div id="login-overlay" hidden>
         <div class="login-box">
             <h1 class="login-title"><span data-ic="user"></span>USER LOGIN</h1>
             <p class="login-sub">URL_MANAGER</p>
-            <form id="loginForm" class="soft-card login-card" autocomplete="off">
-                <input type="text" id="userInput" class="field" placeholder="請輸入使用者代號" aria-label="使用者代號" autocapitalize="off" autocorrect="off" spellcheck="false">
-                <p id="loginError" class="error" hidden></p>
-                <div id="login-history"></div>
-                <button type="submit" class="btn block">進入系統</button>
-            </form>
-            <p class="hint">系統將記住此代號以便下次自動登入</p>
+            <div class="soft-card login-card">
+                <button type="button" id="googleLoginBtn" class="btn block"><span data-ic="user"></span>使用 Google 登入</button>
+                <p id="loginError" class="error" role="alert" hidden></p>
+            </div>
         </div>
     </div>
 
@@ -242,7 +237,7 @@
             <div class="rule"></div>
             <div class="user-row">
                 <div class="user-id"><span data-ic="user"></span><span id="display-user-id">---</span></div>
-                <button type="button" id="logoutBtn" class="switch-btn">切換帳號<span data-ic="logout"></span></button>
+                <button type="button" id="logoutBtn" class="switch-btn">登出<span data-ic="logout"></span></button>
             </div>
         </header>
 
@@ -310,6 +305,10 @@
                 <input type="text" id="newCatName" class="field" placeholder="新分類名稱" aria-label="新分類名稱">
                 <button type="submit" class="btn teal">建立</button>
             </form>
+            <form id="importForm" class="cat-add" autocomplete="off">
+                <input type="text" id="legacyUserId" class="field" placeholder="舊的使用者代號" aria-label="舊的使用者代號" autocapitalize="off" autocorrect="off" spellcheck="false">
+                <button type="submit" id="importBtn" class="btn">匯入</button>
+            </form>
         </div>
     </div>
 
@@ -317,7 +316,9 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, push, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue, push, remove, update, get, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDlxwcj-PSv2Bc1UFgjlVnKUmIzvwXmBig",
@@ -328,6 +329,10 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
+        googleProvider.setCustomParameters({ prompt: 'select_account' });
+        let dataUnsubscribers = [], sessionVersion = 0;
 
         const state = { userId: '', links: [], categories: [], filter: 'all', term: '', loaded: { links: false, cats: false }, collapsed: new Set() };
         let linkSortables = [], catSortable = null;
@@ -359,8 +364,7 @@
         const store = {
             get(key, fallback) { try { const v = localStorage.getItem(key); return v == null ? fallback : JSON.parse(v); } catch { return fallback; } },
             getRaw(key) { try { return localStorage.getItem(key); } catch { return null; } },
-            set(key, val) { try { localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val)); } catch {} },
-            del(key) { try { localStorage.removeItem(key); } catch {} }
+            set(key, val) { try { localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val)); } catch {} }
         };
 
         let toastTimer;
@@ -397,7 +401,10 @@
         }
         const catExists = (id) => state.categories.some(c => c.id === id);
         const isUncat = (l) => !l.categoryId || !catExists(l.categoryId);
-        const userPath = (p) => `users/${state.userId}/${p}`;
+        const userPath = (p) => {
+            if (!state.userId || auth.currentUser?.uid !== state.userId) throw new Error('請先登入');
+            return `users/${state.userId}/${p}`;
+        };
 
         /* ---------- 返回鍵 / History ---------- */
         const OVERLAYS = ['addSheet', 'editSheet', 'catSheet'];
@@ -422,6 +429,7 @@
         }
         window.addEventListener('popstate', (e) => {
             hideOverlays();
+            if (!state.userId) return;
             const st = e.state || {};
             if (!st.view && (state.filter !== 'all' || state.term)) {
                 state.filter = 'all'; state.term = '';
@@ -441,69 +449,118 @@
         });
 
         /* ---------- 登入 ---------- */
-        function renderLoginHistory() {
-            const history_ = store.get('url_manager_history', []);
-            const container = $('login-history');
-            container.innerHTML = '';
-            history_.forEach(id => {
-                const wrapper = el('div', 'history-chip');
-                const idBtn = el('button', 'h-id', id);
-                idBtn.type = 'button';
-                idBtn.onclick = () => { $('userInput').value = id; handleLogin(); };
-                const delBtn = el('button', 'h-del');
-                delBtn.type = 'button';
-                delBtn.setAttribute('aria-label', `移除 ${id}`);
-                delBtn.innerHTML = icon('x');
-                delBtn.onclick = () => {
-                    store.set('url_manager_history', store.get('url_manager_history', []).filter(item => item !== id));
-                    renderLoginHistory();
-                };
-                wrapper.append(idBtn, delBtn);
-                container.appendChild(wrapper);
-            });
+        function showLoginError(error) {
+            const messages = {
+                'auth/operation-not-allowed': '尚未啟用 Google 登入',
+                'auth/unauthorized-domain': '此網域尚未允許登入',
+                'auth/popup-closed-by-user': '已取消登入',
+                'auth/cancelled-popup-request': '請稍後再試',
+                'auth/network-request-failed': '網路連線失敗，請重試',
+                'auth/web-storage-unsupported': '請允許瀏覽器儲存資料後重試'
+            };
+            $('loginError').textContent = messages[error?.code] || '登入失敗，請稍後再試';
+            $('loginError').hidden = false;
         }
 
-        function handleLogin() {
-            const id = $('userInput').value.trim();
-            const err = $('loginError');
-            err.hidden = true;
-            if (!id) return;
-            if (/[.#$\[\]\/]/.test(id)) {
-                err.textContent = '代號不能包含 . # $ [ ] /';
-                err.hidden = false;
-                return;
+        $('googleLoginBtn').addEventListener('click', async () => {
+            $('loginError').hidden = true;
+            $('googleLoginBtn').disabled = true;
+            try {
+                try {
+                    await signInWithPopup(auth, googleProvider);
+                } catch (error) {
+                    if (!['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment'].includes(error.code)) throw error;
+                    await signInWithRedirect(auth, googleProvider);
+                }
+            } catch (error) {
+                showLoginError(error);
+            } finally {
+                $('googleLoginBtn').disabled = false;
             }
-            state.userId = id;
-            const history_ = store.get('url_manager_history', []);
-            if (!history_.includes(id)) store.set('url_manager_history', [id, ...history_].slice(0, 10));
-            store.set('url_manager_current_user', id);
-            state.filter = store.getRaw('url_manager_filter_' + id) || 'all';
-            state.collapsed = new Set(store.get('url_manager_collapsed_' + id, []));
-            $('display-user-id').textContent = id;
-            $('login-overlay').hidden = true;
+        });
+
+        function clearSession() {
+            ++sessionVersion;
+            dataUnsubscribers.forEach(unsubscribe => unsubscribe());
+            dataUnsubscribers = [];
+            linkSortables.forEach(sortable => sortable.destroy());
+            linkSortables = [];
+            if (catSortable) { catSortable.destroy(); catSortable = null; }
+            state.userId = '';
+            state.links = []; state.categories = [];
+            state.filter = 'all'; state.term = ''; state.collapsed = new Set();
+            state.loaded = { links: false, cats: false };
+            firstRender = true;
+            hideOverlays();
+            history.replaceState(null, '');
+            ['main-container', 'filter-bar', 'cat-list', 'newLinkCat', 'editCatId', 'display-user-id', 'empty-msg'].forEach(id => $(id).textContent = '');
+            ['addForm', 'editForm', 'catForm', 'importForm'].forEach(id => $(id).reset());
+            $('editKey').value = '';
+            $('searchInput').value = '';
+            $('searchClear').hidden = true;
+            $('main-container').hidden = true;
+            $('empty-msg').hidden = true;
+            $('loading').hidden = false;
+            $('app-content').hidden = true;
+            $('fab').hidden = true;
+            $('importBtn').disabled = false;
+            clearTimeout(toastTimer);
+            $('toast').textContent = '';
+            $('toast').classList.remove('show');
+        }
+
+        function applyAuthUser(user) {
+            clearSession();
+            $('auth-loading').hidden = true;
+            $('login-overlay').hidden = !!user;
+            if (!user) return;
+            state.userId = auth.currentUser.uid;
+            state.filter = store.getRaw('url_manager_filter_' + state.userId) || 'all';
+            state.collapsed = new Set(store.get('url_manager_collapsed_' + state.userId, []));
+            $('display-user-id').textContent = user.email || user.displayName || 'Google 使用者';
+            $('loginError').hidden = true;
             $('app-content').hidden = false;
             $('fab').hidden = false;
             initDataListeners();
         }
-        $('loginForm').addEventListener('submit', (e) => { e.preventDefault(); handleLogin(); });
-        $('logoutBtn').addEventListener('click', () => {
-            if (confirm('切換使用者？')) { store.del('url_manager_current_user'); location.reload(); }
+
+        $('logoutBtn').addEventListener('click', async () => {
+            $('logoutBtn').disabled = true;
+            clearSession();
+            $('auth-loading').hidden = false;
+            try {
+                await signOut(auth);
+            } catch {
+                applyAuthUser(auth.currentUser);
+                toast('登出失敗，請重試');
+            } finally {
+                $('logoutBtn').disabled = false;
+            }
         });
 
         /* ---------- 資料 ---------- */
         function initDataListeners() {
-            onValue(ref(db, userPath('links')), (snapshot) => {
+            const version = sessionVersion, uid = state.userId;
+            const isCurrent = () => version === sessionVersion && auth.currentUser?.uid === uid;
+            const onError = () => {
+                if (!isCurrent()) return;
+                $('loading').hidden = true;
+                toast('資料讀取失敗，請確認權限或網路');
+            };
+            dataUnsubscribers.push(onValue(ref(db, userPath('links')), (snapshot) => {
+                if (!isCurrent()) return;
                 const data = snapshot.val();
                 state.links = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
                 state.links.sort((a, b) => (a.order || 0) - (b.order || 0));
                 state.loaded.links = true; onData();
-            });
-            onValue(ref(db, userPath('categories')), (snapshot) => {
+            }, onError));
+            dataUnsubscribers.push(onValue(ref(db, userPath('categories')), (snapshot) => {
+                if (!isCurrent()) return;
                 const data = snapshot.val();
                 state.categories = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
                 state.categories.sort((a, b) => (a.order || 0) - (b.order || 0));
                 state.loaded.cats = true; onData();
-            });
+            }, onError));
         }
         let firstRender = true;
         function onData() {
@@ -834,10 +891,61 @@
             toast('已建立分類');
         });
 
+        /* ---------- 匯入舊資料 ---------- */
+        $('importForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if ($('importBtn').disabled || !state.userId) return;
+            const legacyId = $('legacyUserId').value.trim();
+            if (!legacyId) { $('legacyUserId').focus(); return; }
+            if (/[.#$\[\]\/\u0000-\u001f\u007f]/.test(legacyId)) {
+                toast('代號不能包含 . # $ [ ] / 或控制字元');
+                return;
+            }
+            const uid = state.userId, version = sessionVersion;
+            const isCurrent = () => version === sessionVersion && state.userId === uid && auth.currentUser?.uid === uid;
+            if (legacyId === uid) { toast('這是目前帳號，無需匯入'); return; }
+            $('importBtn').disabled = true;
+            const counts = { links: 0, categories: 0 };
+            try {
+                const [links, categories] = await Promise.all([
+                    get(ref(db, `users/${legacyId}/links`)),
+                    get(ref(db, `users/${legacyId}/categories`))
+                ]);
+                if (!isCurrent()) return;
+                if (!links.exists() && !categories.exists()) { toast('找不到資料'); return; }
+                // 直接複製快照值，不轉換 url、key、order 或 categoryId。
+                // 逐筆交易只新增不存在的 key；遇到同時寫入時由伺服器重試。
+                for (const [type, snapshot] of [['categories', categories], ['links', links]]) {
+                    const entries = [];
+                    snapshot.forEach(child => { entries.push([child.key, child.val()]); });
+                    for (const [key, value] of entries) {
+                        if (!isCurrent()) return;
+                        const result = await runTransaction(ref(db, `users/${uid}/${type}/${key}`), current => {
+                            if (!isCurrent() || current !== null) return;
+                            return value;
+                        }, { applyLocally: false });
+                        if (result.committed) ++counts[type];
+                    }
+                }
+                if (isCurrent()) toast(`已匯入 ${counts.links} 筆連結、${counts.categories} 筆分類`);
+            } catch {
+                if (isCurrent()) {
+                    const partial = counts.links || counts.categories ? `已匯入 ${counts.links} 筆連結、${counts.categories} 筆分類；` : '';
+                    toast(partial + '匯入失敗，請確認權限或網路');
+                }
+            } finally {
+                if (isCurrent()) $('importBtn').disabled = false;
+            }
+        });
+
         /* ---------- 啟動 ---------- */
-        renderLoginHistory();
-        const lastUser = store.getRaw('url_manager_current_user');
-        if (lastUser) { $('userInput').value = lastUser; handleLogin(); }
+        getRedirectResult(auth).catch(showLoginError);
+        onAuthStateChanged(auth, applyAuthUser, (error) => {
+            clearSession();
+            $('auth-loading').hidden = true;
+            $('login-overlay').hidden = false;
+            showLoginError(error);
+        });
     </script>
 </body>
 </html>
