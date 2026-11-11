@@ -253,6 +253,7 @@
         <div id="loading" class="loading-spinner"></div>
         <main id="main-container" hidden></main>
         <p id="empty-msg" hidden></p>
+        <button type="button" id="emptyImport" class="btn" style="display:flex;margin:20px auto 0" hidden>匯入舊資料</button>
     </div>
 
     <button type="button" id="fab" aria-label="新增連結" hidden><span data-ic="plus"></span></button>
@@ -704,7 +705,10 @@
             const empty = $('empty-msg');
             empty.textContent = searching ? '找不到符合的連結' : '還沒有連結';
             empty.hidden = hasData;
+            // 帳號完全沒有資料時，直接在畫面上提供匯入入口
+            $('emptyImport').hidden = searching || state.links.length > 0 || state.categories.length > 0;
         }
+        $('emptyImport').addEventListener('click', () => openOverlay('catSheet', 'legacyUserId'));
 
         function createLinkCard(link, sortable) {
             const li = el('li', 'link-card soft-card');
